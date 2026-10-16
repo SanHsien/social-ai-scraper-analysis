@@ -4,7 +4,7 @@
 
 格式參考 [Keep a Changelog](https://keepachangelog.com/zh-TW/1.1.0/)，新的在上面。
 
-## 2026-10-17
+## [1.0.0] - 2026-10-17
 
 ### 新增
 
@@ -32,7 +32,7 @@
 - 修復部分備援數據輸出非標準時間格式之問題。
 - 移除 `REVIEW.md` 行尾多餘空白字元，修復 GitHub Actions Windows CI 閘門（`git diff --check`）失敗問題。
 
-## 2026-10-16
+## [0.1.0] - 2026-10-16
 
 ### 新增
 

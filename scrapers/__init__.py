@@ -7,10 +7,13 @@ from .scrapling_scraper import ScraplingSocialScraper
 from .agent_reach_scraper import AgentReachScraper
 from .scrapegraph_analyzer import ScrapeGraphExtractor
 
+__version__ = "1.0.0"
+
 __all__ = [
     "MultiPlatformScraper",
     "Platform",
     "ScraplingSocialScraper",
     "AgentReachScraper",
-    "ScrapeGraphExtractor"
+    "ScrapeGraphExtractor",
+    "__version__"
 ]

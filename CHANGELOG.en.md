@@ -4,7 +4,7 @@ English | [中文版](CHANGELOG.md)
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest first.
 
-## 2026-10-17
+## [1.0.0] - 2026-10-17
 
 ### Added
 
@@ -32,7 +32,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest 
 - Fixed non-standard datetime outputs in fallback scrapers.
 - Removed trailing whitespace in `REVIEW.md`, fixing GitHub Actions Windows CI gate failure on `git diff --check`.
 
-## 2026-10-16
+## [0.1.0] - 2026-10-16
 
 ### Added
 
