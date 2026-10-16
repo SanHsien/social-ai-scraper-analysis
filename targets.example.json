@@ -1,10 +1,39 @@
-[
-  "karpathy",
-  "levelsio",
-  "sama",
-  "OpenAI",
-  "hwchase17",
-  "aistart_up",
-  "svpino",
-  "DrJimFan"
-]
+{
+  "platforms": {
+    "x": [
+      "karpathy",
+      "levelsio",
+      "sama",
+      "OpenAI",
+      "hwchase17"
+    ],
+    "threads": [
+      "aistart_up",
+      "zuck",
+      "mosseri"
+    ],
+    "instagram": [
+      "creators",
+      "openai"
+    ],
+    "facebook": [
+      "MetaAI"
+    ],
+    "youtube": [
+      "@Fireship",
+      "@maboroshi_ai"
+    ],
+    "reddit": [
+      "r/artificial",
+      "r/SideProject",
+      "r/ChatGPT"
+    ]
+  },
+  "trending_queries": [
+    "AI 工具",
+    "一人創業",
+    "自動化工作流",
+    "Scrapling 爬蟲",
+    "LLM Agents"
+  ]
+}

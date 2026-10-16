@@ -1,82 +1,102 @@
 [English](README.en.md) | 中文版
 
-# AI 社群貼文自動抓取與爆款主題分析工作流 (Social AI Scraper & Analysis)
+# AI 全社群貼文自動抓取與跨平台爆款主題分析工作流 (Multi-Platform Social AI Scraper & Analysis)
 
-本專案整理自 Threads 深度討論（來源：`https://www.threads.com/share/_jV5NQ2xs/`，原創作者：`@aistart_up` AI平凡人創業學院）。
+本專案源自 Threads 深度討論（來源：`https://www.threads.com/share/_jV5NQ2xs/`，原創作者：`@aistart_up` AI平凡人創業學院）。
 
-核心議題：**「叫 AI 自動抓取 100 個 X（Twitter）帳號的貼文，自動分析哪種主題與鉤子表現最好。結合三大開源工具與分析引擎，打造自媒體選題與一人創業閉環。」**
+核心目標：**「不只侷限於 X，全面擴展至 X (Twitter)、Threads、Instagram、Facebook、YouTube、Reddit 等各大主流社群平台；既能針對特定清單帳號批次爬取，更能不限帳號全網廣泛搜尋熱門議題與爆款貼文，自動歸納高互動主題、開頭鉤子 (Hook) 與仿寫指南。」**
 
-專案兼具**線上自動化爬取（突破反爬與高昂官方 API 限制）**與**離線零依賴數據分析報表（`postlens`）**。
+專案兼具**線上跨平台自動化爬取（突破反爬與高額官方 API 限制）**與**離線零依賴數據分析報表（`postlens`）**。
 
 ---
 
 ## 1. 核心流程與架構圖 (Architecture)
 
 ```
-[目標來源: 100 個 X 帳號清單 (targets.json)]
-                │
-                ▼ 突破 Cloudflare、Turnstile 防護、指紋反爬與前端結構改版
-         【Scrapling】
-                │  - StealthyFetcher 防偵測無頭瀏覽器
-                │  - Adaptive Locators (自適應定位器，DOM 結構變更自動修復)
-                ▼
-         【Agent Reach】
-                │  - 專為 AI Agent 設計的跨平台社群介面 (X / Reddit / YouTube)
-                │  - 零官方 API 費用，整合本地 Session、RSS 與多路由容錯
-                ▼
-        【ScrapeGraphAI】
-                │  - Prompt 即爬蟲（自然語言語意解析與知識圖譜構建）
-                │  - 支援本地 Ollama (Llama 3, Qwen 2.5) 零成本或雲端 LLM
-                ▼
-    [爆款主題分析與報表引擎 (analyzer.py / postlens)]
-                │  - 互動加權評分 (Likes + Retweets*2.5 + Replies*1.5)
-                │  - 篩選前 10%～20% 爆款並自動拆解：主題類別、開頭鉤子、爆款要素、仿寫指南
-                ▼
-[產出結果: results.json & viral_insights.csv / postlens Markdown 報表]
+       ┌─────────────────────────────────────────────────────────┐
+       │ 雙探索模式：                                            │
+       │  A. 指定帳號監控 (targets.json: X, Threads, IG, YT...) │
+       │  B. 全網熱門議題探索 (Discovery: 關鍵字/話題/Hashtag)   │
+       └────────────────────────────┬────────────────────────────┘
+                                    │
+                                    ▼ 突破 Cloudflare、Turnstile 防護、指紋反爬與前端結構改版
+                             【Scrapling】
+                                    │  - StealthyFetcher 防偵測無頭瀏覽器
+                                    │  - Adaptive Locators (自適應定位器，DOM 結構變更自動修復)
+                                    ▼
+                             【Agent Reach】
+                                    │  - 跨平台社群介面 (X / Reddit / YouTube / Threads 等)
+                                    │  - 零官方 API 費用，整合本地 Session、RSS 與多路由容錯
+                                    ▼
+                            【ScrapeGraphAI】
+                                    │  - Prompt 即爬蟲（自然語言語意解析與知識圖譜構建）
+                                    │  - 支援本地 Ollama (Llama 3, Qwen 2.5) 零成本或雲端 LLM
+                                    ▼
+    [跨平台爆款主題分析與報表引擎 (analyzer.py / postlens)]
+       │  - 平台加權評分 (X/Threads: 讚+轉*2.5+回*1.5 | YT: 觀看+讚+留言 | Reddit: 推+評)
+       │  - 篩選前 10%～20% 爆款並自動拆解：主題領域、開頭鉤子、爆款要素、仿寫指南
+       ▼
+[產出成果: results.json & viral_insights.csv / postlens Markdown 報表]
 ```
 
 ---
 
-## 2. 三大開源爬蟲工具深度解析
+## 2. 支援社群平台與抓取模式
 
-### ① Scrapling
-- **定位**：高韌性、自適應的現代 Python 爬蟲框架。
-- **解決痛點**：傳統爬蟲（如 BeautifulSoup / Scrapy）在網站前端改版更換 CSS class 或 DOM 結構時會瞬間壞掉；X 更有嚴苛的 Cloudflare / 反爬機制。
-- **核心特點**：
-  - **StealthyFetcher 防偵測**：底層具備瀏覽器指紋混淆技術，開箱即用穿透各類反機器人驗證。
-  - **Adaptive Locators (`adaptive=True`)**：具備結構記憶能力，網頁佈局改動仍能智慧定位目標元素。
-  - **資源過濾加速**：支援 `block_ads=True` 與 `disable_resources=True`，阻擋無關追蹤碼與重度圖片載入。
+### 支援的主流平台 (Platforms)
+| 平台代碼 | 平台名稱 | 支援模式 | 核心指標 |
+|---|---|---|---|
+| `x` | X (前 Twitter) | 帳號監控 / 熱門搜尋 | Likes, Retweets, Replies, Views |
+| `threads` | Instagram Threads | 帳號監控 / 熱門搜尋 | Likes, Reposts, Replies |
+| `instagram` | Instagram (IG) | 帳號主頁 / 探索標籤 | Likes, Comments, Shares |
+| `facebook` | Facebook (FB) | 公開粉專 / 社團話題 | Likes/Reactions, Shares, Comments |
+| `youtube` | YouTube | 頻道影片 / 熱門關鍵字 | Views, Likes, Comments, Transcripts |
+| `reddit` | Reddit | 指定 Subreddit / 全站熱榜 | Upvotes, Comments, Award/Share |
 
-### ② Agent Reach (`agent-reach`)
-- **定位**：為 AI Agent（Claude Code, Cursor, Windsurf 等）設計的社群公開資料統一入口。
-- **解決痛點**：X 官方 API 費用門檻極高，一般個人創作者難以負擔；各大社群平台接口破碎。
-- **核心特點**：
-  - **零官方 API 費用**：整合輕量爬蟲、RSS、本地 Session 與開放端點。
-  - **多平台支援**：一次打通 X (Twitter)、Reddit、YouTube、GitHub 等社群生態。
-  - **Agent 友善**：專門為 Coding Assistant / Autonomous Agent 設計，隨插即用。
-
-### ③ ScrapeGraphAI
-- **定位**：由 LLM 驅動的知識圖譜爬蟲函式庫（"Scrape by asking"）。
-- **解決痛點**：不需要針對每個頁面手寫冗長的 Regex / XPath 解析規則。
-- **核心特點**：
-  - **宣告式抓取**：只要下自然語言 Prompt（例如：「提取所有貼文內容、發布時間、按讚數、並分類為主題標籤」）。
-  - **支援本地模型**：可對接 Ollama（例如 Llama 3, Qwen 2.5）或雲端 API，達成零成本隱私化資料提取。
-  - **輸出結構化**：直接吐出乾淨嚴謹的 JSON 結構。
+### 兩大運作模式 (Modes)
+1. **指定帳號監控 (`--mode accounts`)**：
+   依據 `targets.example.json` 設定的各平台指標帳號，批次採樣抓取近期發布內容。
+2. **全網熱門廣泛探索 (`--mode trending`)**：
+   不限於特定帳號，直接鎖定特定領域關鍵字（例如：「AI 工具」、「一人創業」、「自動化」），全網跨平台抓取最新爆發的高互動貼文。
 
 ---
 
-## 3. 專案目錄結構
+## 3. 三大開源爬蟲工具深度解析
+
+### ① Scrapling
+- **定位**：高韌性、自適應的現代 Python 爬蟲框架。
+- **核心特點**：
+  - **StealthyFetcher 防偵測**：底層具備瀏覽器指紋混淆技術，開箱即用穿透 Cloudflare Turnstile、AWS WAF 各類反爬驗證。
+  - **Adaptive Locators (`adaptive=True`)**：具備結構記憶能力，網頁佈局改動仍能智慧重新定位目標元素。
+  - **資源過濾加速**：支援 `block_ads=True` 與 `disable_resources=True`，阻擋無關追蹤碼與重度圖片載入。
+
+### ② Agent Reach (`agent-reach`)
+- **定位**：為 AI Agent（Claude Code, Cursor, Windsurf 等）設計的跨平台社群公開資料統一入口。
+- **核心特點**：
+  - **零官方 API 費用**：整合輕量爬蟲、RSS、本地 Session 與開放端點，免除動輒數千美元的 API 門檻。
+  - **多平台擴展**：一次打通 X (Twitter)、Reddit、YouTube 字幕、GitHub 等社群生態。
+
+### ③ ScrapeGraphAI
+- **定位**：由 LLM 驅動的知識圖譜爬蟲函式庫（"Scrape by asking"）。
+- **核心特點**：
+  - **宣告式抓取**：只要下自然語言 Prompt（例如：「提取所有貼文內容、發布時間、按讚數，並分類為主題標籤」）。
+  - **本地模型支援**：可對接 Ollama（例如 Llama 3, Qwen 2.5），達成零成本隱私化資料提取。
+
+---
+
+## 4. 專案目錄結構
 
 ```
 social-ai-scraper-analysis/
 ├── scrapers/                     # 爬蟲模組
 │   ├── __init__.py
+│   ├── multi_platform_scraper.py # 跨平台整合調度 (X, Threads, IG, FB, YT, Reddit)
 │   ├── scrapling_scraper.py      # Scrapling StealthyFetcher 與自適應解析
 │   ├── agent_reach_scraper.py    # Agent Reach 跨平台免 API 社群調用
 │   └── scrapegraph_analyzer.py   # ScrapeGraphAI 宣告式 Prompt 抽取
-├── analyzer.py                   # 互動率評分、爆款篩選、鉤子拆解與仿寫模組
+├── analyzer.py                   # 跨平台互動評分、爆款篩選、鉤子拆解與仿寫模組
 ├── workflow_example.py           # 完整端到端可執行自動化工作流腳本
-├── targets.example.json          # 監控對象清單範本
+├── targets.example.json          # 跨平台監控清單與熱門搜尋詞範本
 ├── requirements.txt              # 爬蟲與 AI 套件依賴
 ├── postlens/                     # 零依賴本機數據分析報表引擎
 │   ├── __init__.py
@@ -84,13 +104,13 @@ social-ai-scraper-analysis/
 │   ├── loaders.py                # CSV / JSON / X Archive 載入器
 │   └── report.py                 # Markdown 報表生成器
 ├── examples/                     # 範例資料集
-├── tests/                        # 單元測試集
+├── tests/                        # 單元測試集 (含跨平台測試)
 └── README.md
 ```
 
 ---
 
-## 4. 快速安裝與環境建置
+## 5. 快速安裝與環境建置
 
 ### 步驟一：安裝相依套件
 ```bash
@@ -108,27 +128,29 @@ playwright install
 
 ---
 
-## 5. 執行工作流
+## 6. 執行工作流
 
-### 模式 A：線上自動化爬取與爆款分析
-執行整合管線，自動抓取目標帳號並產出爆款主題分析：
+### 模式 A：全網熱門廣泛探索 (Trending Discovery)
+直接針對特定關鍵字跨各大平台抓取爆款內容：
 ```bash
-python workflow_example.py
+# 全網搜尋「一人創業」熱門貼文 (涵蓋 X, Threads, YouTube, Reddit)
+python workflow_example.py --mode trending --platforms all --query "一人創業"
+
+# 指定特定平台搜尋「AI 工具」
+python workflow_example.py --mode trending --platforms threads,youtube,reddit --query "AI 工具"
 ```
 
-支援自訂參數：
+### 模式 B：指定帳號跨平台監控 (Account Mode)
+讀取 `targets.example.json` 監控各平台名單：
 ```bash
-# 指定使用 Scrapling 引擎，並設定代理伺服器
-python workflow_example.py --engine scrapling --proxy http://127.0.0.1:7890 --max-posts 10
+# 抓取所有已設定平台之帳號
+python workflow_example.py --mode accounts --platforms all
 
-# 使用 Agent Reach 跨平台介面
-python workflow_example.py --engine agent-reach
-
-# 指定自訂目標清單與輸出檔名
-python workflow_example.py --targets targets.example.json --output-csv viral_insights.csv
+# 僅針對 X 與 Threads 抓取
+python workflow_example.py --mode accounts --platforms x,threads --max-posts 5
 ```
 
-### 模式 B：離線貼文數據報表 (`postlens`)
+### 模式 C：離線貼文數據報表 (`postlens`)
 若手邊已有封存檔或已抓取之 CSV/JSON 檔案，可直接呼叫內建的零依賴分析模組：
 ```bash
 python -m postlens analyze examples/sample_posts.csv --rules rules.example.json --out out
@@ -140,25 +162,14 @@ python -m postlens analyze examples/sample_posts.csv --rules rules.example.json 
 
 ---
 
-## 6. 分析計算方式與維度
-
-- **互動加權分數**：
-  $$\text{Score} = \text{Likes} \times 1.0 + \text{Retweets} \times 2.5 + \text{Replies} \times 1.5 + \text{Quotes} \times 2.0$$
-- **爆款萃取維度**：
-  - `topic_category`：領域主題分類（AI 工具評測、一人創業、個人成長等）
-  - `hook_style`：開頭鉤子型態（反常識顛覆型、利益誘惑型、教學清單型等）
-  - `viral_factors`：高轉發關鍵驅動要素
-  - `imitation_guide`：客製化仿寫範本指南
-
----
-
 ## 7. 測試與驗證
 
 執行完整測試套件：
 ```bash
 python -m unittest discover -s tests -v
 python tools/check_links.py
-python workflow_example.py
+python workflow_example.py --mode accounts --platforms all
+python workflow_example.py --mode trending --query "AI"
 ```
 
 Windows 完整檢查：
@@ -170,7 +181,7 @@ pwsh -File tools/dev_check.ps1
 
 ## 8. 專案守則與維護規範 (Governance & Agent Rules)
 
-- **核心定位與開發者意志**：本專案聚焦於社群公開資料擷取、自適應突破反爬與爆款主題自動化分析。
+- **核心定位與開發者意志**：本專案聚焦於跨社群平台公開資料擷取、自適應突破反爬與爆款主題自動化分析。
 - **嚴禁 Agent 擅自自我設限**：詳見 [AGENTS.md](AGENTS.md)。嚴禁任何 AI Agent 未經開發者明確同意擅自改寫專案定位、閹割核心爬蟲與反爬功能、或刪減目標清單。任何維護與程式碼調整皆必須以開發者之明確需求為唯一依歸。
 
 ---

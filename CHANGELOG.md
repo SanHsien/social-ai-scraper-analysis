@@ -18,6 +18,9 @@
 - 修復 Windows 11 控制台 CP950 編碼輸出問題。
 - 更新 `README.md`、`README.en.md` 與 `AGENTS.md`，消除對爬蟲的自我閹割限制，明確專案為線上自動爬取與離線 `postlens` 報表雙模式架構。
 - 於相關 Markdown 文件（`AGENTS.md`、`CLAUDE.md`、`README.md`、`README.en.md`）增訂最高硬閘門：嚴禁任何 AI Agent 未經開發者同意擅自改寫專案目的、將核心功能降級或自我設限。
+- 擴展為全主流社群平台抓取與分析架構：支援 X (Twitter)、Threads、Instagram、Facebook、YouTube、Reddit。
+- 實作「特定帳號監控 (Account Mode)」與「全網熱門廣泛探索 (Trending Discovery Mode)」雙模式，支援按關鍵字或話題全網探索熱門貼文。
+- 新增 `scrapers/multi_platform_scraper.py` 與 `tests/test_multi_platform.py` 單元測試套件（通過 29 項測試）。
 
 ## 2026-10-16
 
