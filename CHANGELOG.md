@@ -4,6 +4,20 @@
 
 格式參考 [Keep a Changelog](https://keepachangelog.com/zh-TW/1.1.0/)，新的在上面。
 
+## 2026-10-17
+
+### 新增
+
+- 完整恢復並實作社群爬蟲模組（`scrapers/`）：
+  - `scrapling_scraper.py`：整合 Scrapling `StealthyFetcher` 突破 Cloudflare Turnstile 與防爬防護，具備 `adaptive=True` 自適應結構修復。
+  - `agent_reach_scraper.py`：整合 Agent Reach 提供跨平台零官方 API 費用的社群公開資料擷取。
+  - `scrapegraph_analyzer.py`：整合 ScrapeGraphAI 宣告式 Prompt 即爬蟲與本地 Ollama / 雲端 LLM 抽取。
+- 完整重構端到端可執行腳本 `workflow_example.py`，取代原先純文字 print 骨架，支援命令列參數、代理伺服器、批次帳號抓取、互動分數排名與主題鉤子萃取。
+- 實作 `analyzer.py` 進行貼文互動權重分計算、前 20% 爆款篩選、主題分類與仿寫策略生成，並輸出 `results.json` 與 `viral_insights.csv`。
+- 恢復 `targets.example.json` 與新增 `requirements.txt`。
+- 修復 Windows 11 控制台 CP950 編碼輸出問題。
+- 更新 `README.md`、`README.en.md` 與 `AGENTS.md`，消除對爬蟲的自我閹割限制，明確專案為線上自動爬取與離線 `postlens` 報表雙模式架構。
+
 ## 2026-10-16
 
 ### 新增
@@ -18,8 +32,3 @@
 - Python 3.10 讀不了 Graph／Threads API 的 `+0000` 時區格式。
 - `--since`／`--until` 給 10 位數 Unix 秒數時，被誤當成「只有日期」而套用 `--utc-offset`。
 - 數字欄位是 `inf` 或檔案不是 UTF-8 時，改成指出檔名與列號的錯誤（結束碼 2）。
-
-### 移除
-
-- 原 README 中繞過反爬與 Cloudflare 的工具介紹與安裝說明。
-- `targets.example.json`（列有真實個人帳號）與只會印說明文字的 `workflow_example.py`。

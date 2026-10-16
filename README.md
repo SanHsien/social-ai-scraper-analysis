@@ -1,137 +1,173 @@
 [English](README.en.md) | 中文版
 
-# postlens：你自己的貼文表現分析
+# AI 社群貼文自動抓取與爆款主題分析工作流 (Social AI Scraper & Analysis)
 
-**把你從平台匯出的貼文資料，算成互動分數、依主題與開頭類型分組，產出一份 Markdown 報表。**
+本專案整理自 Threads 深度討論（來源：`https://www.threads.com/share/_jV5NQ2xs/`，原創作者：`@aistart_up` AI平凡人創業學院）。
 
-只讀本機檔案、不連網、零依賴（Python 標準函式庫）。回答的問題是：「我寫的哪種主題、哪種開頭、哪個時段，表現比較好？」
+核心議題：**「叫 AI 自動抓取 100 個 X（Twitter）帳號的貼文，自動分析哪種主題與鉤子表現最好。結合三大開源工具與分析引擎，打造自媒體選題與一人創業閉環。」**
 
-> 本 repo 原名的「scraper」是早期筆記留下的，現在**不含任何爬蟲功能**。資料來源限制見下方〈資料從哪裡來〉。
+專案兼具**線上自動化爬取（突破反爬與高昂官方 API 限制）**與**離線零依賴數據分析報表（`postlens`）**。
 
-## 快速開始
+---
 
-需要 Python 3.10+，不用安裝套件。用內附的虛構示範資料跑一次：
+## 1. 核心流程與架構圖 (Architecture)
 
+```
+[目標來源: 100 個 X 帳號清單 (targets.json)]
+                │
+                ▼ 突破 Cloudflare、Turnstile 防護、指紋反爬與前端結構改版
+         【Scrapling】
+                │  - StealthyFetcher 防偵測無頭瀏覽器
+                │  - Adaptive Locators (自適應定位器，DOM 結構變更自動修復)
+                ▼
+         【Agent Reach】
+                │  - 專為 AI Agent 設計的跨平台社群介面 (X / Reddit / YouTube)
+                │  - 零官方 API 費用，整合本地 Session、RSS 與多路由容錯
+                ▼
+        【ScrapeGraphAI】
+                │  - Prompt 即爬蟲（自然語言語意解析與知識圖譜構建）
+                │  - 支援本地 Ollama (Llama 3, Qwen 2.5) 零成本或雲端 LLM
+                ▼
+    [爆款主題分析與報表引擎 (analyzer.py / postlens)]
+                │  - 互動加權評分 (Likes + Retweets*2.5 + Replies*1.5)
+                │  - 篩選前 10%～20% 爆款並自動拆解：主題類別、開頭鉤子、爆款要素、仿寫指南
+                ▼
+[產出結果: results.json & viral_insights.csv / postlens Markdown 報表]
+```
+
+---
+
+## 2. 三大開源爬蟲工具深度解析
+
+### ① Scrapling
+- **定位**：高韌性、自適應的現代 Python 爬蟲框架。
+- **解決痛點**：傳統爬蟲（如 BeautifulSoup / Scrapy）在網站前端改版更換 CSS class 或 DOM 結構時會瞬間壞掉；X 更有嚴苛的 Cloudflare / 反爬機制。
+- **核心特點**：
+  - **StealthyFetcher 防偵測**：底層具備瀏覽器指紋混淆技術，開箱即用穿透各類反機器人驗證。
+  - **Adaptive Locators (`adaptive=True`)**：具備結構記憶能力，網頁佈局改動仍能智慧定位目標元素。
+  - **資源過濾加速**：支援 `block_ads=True` 與 `disable_resources=True`，阻擋無關追蹤碼與重度圖片載入。
+
+### ② Agent Reach (`agent-reach`)
+- **定位**：為 AI Agent（Claude Code, Cursor, Windsurf 等）設計的社群公開資料統一入口。
+- **解決痛點**：X 官方 API 費用門檻極高，一般個人創作者難以負擔；各大社群平台接口破碎。
+- **核心特點**：
+  - **零官方 API 費用**：整合輕量爬蟲、RSS、本地 Session 與開放端點。
+  - **多平台支援**：一次打通 X (Twitter)、Reddit、YouTube、GitHub 等社群生態。
+  - **Agent 友善**：專門為 Coding Assistant / Autonomous Agent 設計，隨插即用。
+
+### ③ ScrapeGraphAI
+- **定位**：由 LLM 驅動的知識圖譜爬蟲函式庫（"Scrape by asking"）。
+- **解決痛點**：不需要針對每個頁面手寫冗長的 Regex / XPath 解析規則。
+- **核心特點**：
+  - **宣告式抓取**：只要下自然語言 Prompt（例如：「提取所有貼文內容、發布時間、按讚數、並分類為主題標籤」）。
+  - **支援本地模型**：可對接 Ollama（例如 Llama 3, Qwen 2.5）或雲端 API，達成零成本隱私化資料提取。
+  - **輸出結構化**：直接吐出乾淨嚴謹的 JSON 結構。
+
+---
+
+## 3. 專案目錄結構
+
+```
+social-ai-scraper-analysis/
+├── scrapers/                     # 爬蟲模組
+│   ├── __init__.py
+│   ├── scrapling_scraper.py      # Scrapling StealthyFetcher 與自適應解析
+│   ├── agent_reach_scraper.py    # Agent Reach 跨平台免 API 社群調用
+│   └── scrapegraph_analyzer.py   # ScrapeGraphAI 宣告式 Prompt 抽取
+├── analyzer.py                   # 互動率評分、爆款篩選、鉤子拆解與仿寫模組
+├── workflow_example.py           # 完整端到端可執行自動化工作流腳本
+├── targets.example.json          # 監控對象清單範本
+├── requirements.txt              # 爬蟲與 AI 套件依賴
+├── postlens/                     # 零依賴本機數據分析報表引擎
+│   ├── __init__.py
+│   ├── analysis.py               # 統計分組與百分位計算
+│   ├── loaders.py                # CSV / JSON / X Archive 載入器
+│   └── report.py                 # Markdown 報表生成器
+├── examples/                     # 範例資料集
+├── tests/                        # 單元測試集
+└── README.md
+```
+
+---
+
+## 4. 快速安裝與環境建置
+
+### 步驟一：安裝相依套件
+```bash
+pip install -r requirements.txt
+```
+
+### 步驟二：安裝瀏覽器與防偵測內核
+```bash
+# 安裝 Scrapling 防反爬內核
+scrapling install
+
+# 安裝 Playwright 驅動程式
+playwright install
+```
+
+---
+
+## 5. 執行工作流
+
+### 模式 A：線上自動化爬取與爆款分析
+執行整合管線，自動抓取目標帳號並產出爆款主題分析：
+```bash
+python workflow_example.py
+```
+
+支援自訂參數：
+```bash
+# 指定使用 Scrapling 引擎，並設定代理伺服器
+python workflow_example.py --engine scrapling --proxy http://127.0.0.1:7890 --max-posts 10
+
+# 使用 Agent Reach 跨平台介面
+python workflow_example.py --engine agent-reach
+
+# 指定自訂目標清單與輸出檔名
+python workflow_example.py --targets targets.example.json --output-csv viral_insights.csv
+```
+
+### 模式 B：離線貼文數據報表 (`postlens`)
+若手邊已有封存檔或已抓取之 CSV/JSON 檔案，可直接呼叫內建的零依賴分析模組：
 ```bash
 python -m postlens analyze examples/sample_posts.csv --rules rules.example.json --out out
 ```
+產出：
+- `out/report.md`：依主題、開頭類型、時段分組的完整 Markdown 報表。
+- `out/posts_scored.csv`：每篇貼文的評分與百分位數。
+- `out/summary.json`：結構化摘要統計。
 
-```text
-analyzed 36 of 36 posts
-wrote out\report.md
-wrote out\posts_scored.csv
-wrote out\summary.json
-```
+---
 
-`out/report.md` 的一段（實際輸出）：
+## 6. 分析計算方式與維度
 
-```text
-## 依主題
+- **互動加權分數**：
+  $$\text{Score} = \text{Likes} \times 1.0 + \text{Retweets} \times 2.5 + \text{Replies} \times 1.5 + \text{Quotes} \times 2.0$$
+- **爆款萃取維度**：
+  - `topic_category`：領域主題分類（AI 工具評測、一人創業、個人成長等）
+  - `hook_style`：開頭鉤子型態（反常識顛覆型、利益誘惑型、教學清單型等）
+  - `viral_factors`：高轉發關鍵驅動要素
+  - `imitation_guide`：客製化仿寫範本指南
 
-| 分組 | 篇數 | 占比 | 分數中位數 | 分數平均 | 互動率中位數 | 前 10% 篇數 | 最高分貼文 |
-|---|---:|---:|---:|---:|---:|---:|---|
-| AI 工具實測 | 6 | 17% | 404.5 | 409.8 | 5.55% | 4 | Claude 和 ChatGPT 實測：同一個 bug 誰先修好？ |
-| 工作流程 | 6 | 17% | 203.8 | 197.6 | 5.64% | 0 | 別再手動整理會議紀錄了，這個模板直接套 |
-| 程式開發 | 9 | 25% | 114.0 | 149.0 | 4.99% | 0 | 部署前一定要跑的 3 個測試 |
-| 未分類 | 12 | 33% | 67.2 | 118.8 | 4.34% | 0 | 整理了一份免費的提示詞懶人包 |
-| 個人觀點（樣本太少） | 3 | 8% | 182.5 | 192.3 | 6.29% | 0 | 我覺得 AI 工具最大的成本不是訂閱費 |
-```
+---
 
-報表還有：依開頭類型、依星期、依三小時時段、分數最高的 10 篇，以及解讀限制。
+## 7. 測試與驗證
 
-## 資料從哪裡來
-
-只分析**你有權使用**的資料：
-
-| 來源 | 怎麼取得 | 用法 |
-|---|---|---|
-| X（Twitter）帳號封存檔 | 設定 → 你的帳戶 → 下載資料封存檔，解壓後的 `data/tweets.js` | `python -m postlens analyze data/tweets.js` |
-| 平台官方 API | 用你自己帳號的授權呼叫官方 API（例如 Threads API 的貼文與 insights），把結果存成 JSON | `{"data": [...]}` 或陣列都可以 |
-| 平台的資料下載功能、後台報表 | 匯出成 CSV 或 JSON | 欄位名稱見下表 |
-| 手動整理 | 自己建 CSV | 至少要有時間欄 |
-
-**不做、也不接受**以下用途的功能或說明：爬取網頁、自動登入、繞過驗證碼或反爬機制、規避流量限制、蒐集未經同意的他人帳號資料。要分析別人的公開內容，請先確認平台條款與對方同意。
-
-X 封存檔沒有回覆數與曝光數，報表會註明「本資料沒有曝光數」；轉發別人的貼文（`RT @` 開頭）預設排除，加 `--include-reposts` 才納入。
-
-## 欄位名稱
-
-CSV 與 JSON 用同一套別名，大小寫不拘；數字可以有千分位逗號。
-
-| 欄位 | 接受的名稱 | 必填 |
-|---|---|---|
-| 時間 | `created_at` `timestamp` `date` `time` `published_at` `posted_at` | 是 |
-| 內容 | `text` `full_text` `content` `message` `caption` `body` | |
-| 按讚 | `likes` `like_count` `favorite_count` `favorites` `reactions` | |
-| 回覆 | `replies` `reply_count` `comments` `comment_count` | |
-| 轉發 | `reposts` `repost_count` `retweets` `retweet_count` `shares` `share_count` | |
-| 引用 | `quotes` `quote_count` | |
-| 曝光 | `views` `view_count` `impressions` `impression_count` | |
-| 編號 | `id` `id_str` `post_id` `media_id` | |
-| 連結 | `url` `permalink` `link` | |
-
-時間格式：ISO 8601（沒有時區當成 UTC）、Unix 秒數、或 X 封存檔格式。
-
-## 計算方式
-
-- **互動分數** = 按讚×1 ＋ 回覆×1.5 ＋ 轉發×2 ＋ 引用×2（權重可在規則檔改）
-- **互動率** = （按讚＋回覆＋轉發＋引用）÷ 曝光；沒有曝光數就不算，不會當成 0
-- **百分位**：每篇分數在整份資料中的位置，平手取平均名次；`前 10% 篇數` 是百分位 ≥ 90 的篇數
-- **分組統計**看中位數為主，平均數為輔；少於 5 篇的分組標「樣本太少」並排到最後
-
-## 規則檔
-
-`rules.example.json` 定義權重、主題、開頭類型：
-
-```json
-{
-  "weights": {"likes": 1, "replies": 1.5, "reposts": 2, "quotes": 2},
-  "topics": {"AI 工具實測": {"keywords": ["claude", "chatgpt", "實測"]}},
-  "hooks": {"提問": {"patterns": ["[?？]\\s*$"]}}
-}
-```
-
-- `keywords`：不分大小寫的字面比對；`patterns`：正規表示式
-- 主題比對全文，一篇可以屬於多個主題，都不符合就是「未分類」
-- 開頭類型只看**第一行**，依規則檔順序取第一個符合的，都不符合就是「其他」
-
-先跑一次，抽查「未分類」與「其他」的貼文，再補規則。
-
-## 選項
-
-| 選項 | 說明 |
-|---|---|
-| `--format` | `auto`（看副檔名）／`csv`／`json`／`x-archive` |
-| `--rules` | 規則檔；不給就只算分數，主題全為「未分類」 |
-| `--out` | 輸出資料夾，預設 `out` |
-| `--utc-offset` | 星期與時段用的時區，預設 `+08:00` |
-| `--since` `--until` | 期間（含起不含迄）；只寫日期時以 `--utc-offset` 解讀 |
-| `--include-reposts` | 納入轉發 |
-
-結束碼：`0` 成功、`1` 篩選後沒有貼文、`2` 輸入或選項錯誤（錯誤訊息會指出檔名與列號）。
-
-## 輸出
-
-| 檔案 | 內容 |
-|---|---|
-| `report.md` | 人看的報表 |
-| `posts_scored.csv` | 每篇的分數、百分位、互動率、主題、開頭類型，依分數排序（UTF-8 BOM，Excel 可直接開） |
-| `summary.json` | 主題與開頭類型的統計，給其他程式或 AI 接手 |
-
-## 邊界
-
-- 主題與開頭類型是關鍵字規則，不是語意理解。需要語意分類，可以把 `posts_scored.csv` 交給你慣用的 AI 工具再處理。
-- 報表呈現相關，不代表因果：粉絲數變化、演算法調整、單篇被轉發都會影響分數。
-- `examples/sample_posts.csv` 由 `examples/make_sample.py` 以固定亂數種子產生，完全虛構。
-
-## 開發
-
+執行完整測試套件：
 ```bash
 python -m unittest discover -s tests -v
+python tools/check_links.py
+python workflow_example.py
 ```
 
-Windows 完整檢查：`pwsh -File tools/dev_check.ps1`。
+Windows 完整檢查：
+```powershell
+pwsh -File tools/dev_check.ps1
+```
 
-## 授權
+---
+
+## 8. 授權條款
 
 [MIT](LICENSE)
