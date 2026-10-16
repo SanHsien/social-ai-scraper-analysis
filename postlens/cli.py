@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -57,7 +58,7 @@ def _date(value: str | None, tz) -> datetime | None:
         return None
     dt = parse_datetime(value)
     # 只給日期（沒有時間）時，以使用者指定的時區解讀
-    if len(value.strip()) == 10:
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value.strip()):
         dt = dt.replace(tzinfo=tz)
     return dt
 

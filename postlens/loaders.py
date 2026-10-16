@@ -39,8 +39,11 @@ def parse_datetime(value: str) -> datetime:
     value = str(value).strip()
     if re.fullmatch(r"\d{9,11}(\.\d+)?", value):
         return datetime.fromtimestamp(float(value), tz=timezone.utc)
+    value_iso = value.replace("Z", "+00:00")
+    # Graph／Threads API 的 `+0000` 時區；Python 3.10 的 fromisoformat 只認 `+00:00`
+    value_iso = re.sub(r"^(\d{4}-\d{2}-\d{2}[T ][\d:.]+)([+-]\d{2})(\d{2})$", r"\1\2:\3", value_iso)
     try:
-        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(value_iso)
     except ValueError:
         try:
             dt = datetime.strptime(value, "%a %b %d %H:%M:%S %z %Y")
@@ -66,7 +69,7 @@ def _to_int(value, field: str) -> int | None:
     text = str(value).replace(",", "").strip()
     try:
         number = int(float(text))
-    except ValueError:
+    except (ValueError, OverflowError):
         raise ValueError(f"{field} is not a number: {value!r}") from None
     if number < 0:
         raise ValueError(f"{field} is negative: {value!r}")

@@ -50,8 +50,17 @@ class DateTests(unittest.TestCase):
         self.assertEqual(loaders.parse_datetime("1788220800"), datetime(2026, 9, 1, tzinfo=utc))
         self.assertEqual(loaders.parse_datetime("Tue Sep 01 00:00:00 +0000 2026"),
                          datetime(2026, 9, 1, tzinfo=utc))
+        # Graph／Threads API 格式，Python 3.10 也要能讀
+        self.assertEqual(loaders.parse_datetime("2026-09-01T08:00:00+0800"), datetime(2026, 9, 1, tzinfo=utc))
         with self.assertRaises(ValueError):
             loaders.parse_datetime("yesterday")
+
+    def test_cli_date_only_vs_unix_seconds(self):
+        from postlens.cli import _date
+        tz = analysis.parse_offset("+08:00")
+        self.assertEqual(_date("2026-09-01", tz).utcoffset().total_seconds(), 8 * 3600)
+        self.assertEqual(_date("1788220800", tz), datetime(2026, 9, 1, tzinfo=timezone.utc))
+        self.assertEqual(_date("1788220800", tz).utcoffset().total_seconds(), 0)
 
 
 class LoaderTests(TempDirCase):
@@ -67,6 +76,9 @@ class LoaderTests(TempDirCase):
         p = self.tmp / "bad.csv"
         p.write_text("id,date,likes\n1,2026-09-01,5\n2,2026-09-02,-1\n", encoding="utf-8")
         with self.assertRaisesRegex(loaders.DataError, r"bad\.csv:3: likes is negative"):
+            loaders.load(p)
+        p.write_text("id,date,likes\n1,2026-09-01,inf\n", encoding="utf-8")
+        with self.assertRaisesRegex(loaders.DataError, r"bad\.csv:2: likes is not a number"):
             loaders.load(p)
         p.write_text("id,likes\n1,5\n", encoding="utf-8")
         with self.assertRaisesRegex(loaders.DataError, r"bad\.csv:2: missing created_at"):
