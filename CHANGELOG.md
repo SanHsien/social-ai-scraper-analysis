@@ -17,6 +17,7 @@
 - 恢復 `targets.example.json` 與新增 `requirements.txt`。
 - 修復 Windows 11 控制台 CP950 編碼輸出問題。
 - 更新 `README.md`、`README.en.md` 與 `AGENTS.md`，消除對爬蟲的自我閹割限制，明確專案為線上自動爬取與離線 `postlens` 報表雙模式架構。
+- 於相關 Markdown 文件（`AGENTS.md`、`CLAUDE.md`、`README.md`、`README.en.md`）增訂最高硬閘門：嚴禁任何 AI Agent 未經開發者同意擅自改寫專案目的、將核心功能降級或自我設限。
 
 ## 2026-10-16
 

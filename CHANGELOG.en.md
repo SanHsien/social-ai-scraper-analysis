@@ -17,6 +17,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest 
 - Restored `targets.example.json` and added `requirements.txt`.
 - Fixed Windows 11 console CP950 Unicode encoding issue.
 - Updated `README.md`, `README.en.md`, and `AGENTS.md` to remove anti-scraping restrictions and support both automated online scraping and offline `postlens` reporting.
+- Added non-negotiable governance rule across `AGENTS.md`, `CLAUDE.md`, `README.md`, and `README.en.md` strictly prohibiting AI Agents from altering project scope, downgrading core features, or imposing self-restrictions without developer consent.
 
 ## 2026-10-16
 
