@@ -165,3 +165,5 @@ def load(path: Path, fmt: str = "auto") -> list[Post]:
         return loader(path)
     except json.JSONDecodeError as exc:
         raise DataError(f"{path}: invalid JSON: {exc}") from None
+    except UnicodeDecodeError:
+        raise DataError(f"{path}: not UTF-8; re-save the file as UTF-8 and try again") from None

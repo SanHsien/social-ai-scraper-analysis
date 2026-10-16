@@ -93,6 +93,12 @@ class LoaderTests(TempDirCase):
         with self.assertRaisesRegex(loaders.DataError, "not an X archive"):
             loaders.load(p)
 
+    def test_non_utf8_file_names_the_file(self):
+        p = self.tmp / "big5.csv"
+        p.write_bytes("id,date,text\n1,2026-09-01,中文\n".encode("cp950"))
+        with self.assertRaisesRegex(loaders.DataError, r"big5\.csv: not UTF-8"):
+            loaders.load(p)
+
     def test_unknown_extension(self):
         p = self.tmp / "data.txt"
         p.write_text("x", encoding="utf-8")

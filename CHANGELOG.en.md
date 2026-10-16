@@ -10,7 +10,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest 
 
 - `postlens`: reads CSV / JSON / X archive `tweets.js`, computes engagement score, engagement rate and percentile, classifies topics and hooks from a rules file, and writes `report.md`, `posts_scored.csv`, `summary.json`.
 - `rules.example.json`, fictional sample data and its generator `examples/make_sample.py`.
-- Tests (stdlib `unittest`, 21 cases), `tools/dev_check.ps1`, GitHub Actions (Windows + Ubuntu Python 3.10 / 3.13).
+- Tests (stdlib `unittest`, 22 cases), `tools/dev_check.ps1`, GitHub Actions (Windows + Ubuntu Python 3.10 / 3.13).
 - Bilingual README, MIT license, `.gitattributes`, `.editorconfig`.
 
 ### Removed
