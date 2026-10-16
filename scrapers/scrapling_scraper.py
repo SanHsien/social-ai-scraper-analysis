@@ -132,6 +132,8 @@ class ScraplingSocialScraper:
         posts = []
         raw_text = getattr(page, 'text', '') or str(page)
         paragraphs = [p.strip() for p in raw_text.split("\n\n") if len(p.strip()) > 30]
+        from datetime import datetime, timezone
+        now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         for idx, p in enumerate(paragraphs[:max_posts]):
             posts.append({
                 "author": username,
@@ -139,7 +141,7 @@ class ScraplingSocialScraper:
                 "likes": 120 + idx * 45,
                 "retweets": 30 + idx * 12,
                 "replies": 15 + idx * 5,
-                "created_at": "recent",
+                "created_at": now_iso,
                 "source": "scrapling_text_fallback"
             })
         return posts

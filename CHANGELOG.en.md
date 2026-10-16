@@ -20,7 +20,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest 
 - Added non-negotiable governance rule across `AGENTS.md`, `CLAUDE.md`, `README.md`, and `README.en.md` strictly prohibiting AI Agents from altering project scope, downgrading core features, or imposing self-restrictions without developer consent.
 - Expanded architecture across all mainstream social platforms: X (Twitter), Threads, Instagram, Facebook, YouTube, and Reddit.
 - Implemented dual modes: "Target Account Monitoring (Account Mode)" and broad "Trending Discovery Mode" for searching viral content across platforms by keyword or topic.
-- Added `scrapers/multi_platform_scraper.py` and unit test suite `tests/test_multi_platform.py` (29 passing tests).
+- Added `scrapers/multi_platform_scraper.py` and unit test suite `tests/test_multi_platform.py` (31 passing tests).
+- Added comprehensive repository code review document `REVIEW.md`.
+
+### Fixed
+
+- Fixed missing `created_at` in `viral_insights.csv` causing `postlens` to fail with DataError.
+- Fixed conversion exceptions in `analyzer.py` and `agent_reach_scraper.py` when metrics are `None` or formatted strings.
+- Removed hardcoded 3-account limit per platform in `workflow_example.py` by adding `--max-targets` and `--run-postlens`.
+- Fixed unescaped URL query parameters in social trending search.
+- Fixed non-standard datetime outputs in fallback scrapers.
 
 ## 2026-10-16
 

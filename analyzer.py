@@ -3,12 +3,39 @@
 支援跨平台 (X, Threads, Instagram, Facebook, YouTube, Reddit) 互動指標權重計分與主題維度剖析
 """
 
-import json
+import re
 import csv
+import json
 import logging
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
+
+def _safe_float(val: Any, default: float = 0.0) -> float:
+    """安全轉換數值，容錯 None、千分位逗號、K/M/B 單位字串"""
+    if val is None:
+        return default
+    if isinstance(val, (int, float)):
+        return float(val)
+    text = str(val).replace(",", "").strip().upper()
+    if not text:
+        return default
+    match = re.search(r"([\d\.]+)([KMB]?)", text)
+    if not match:
+        return default
+    try:
+        num = float(match.group(1))
+        unit = match.group(2)
+        if unit == "K":
+            return num * 1000.0
+        elif unit == "M":
+            return num * 1000000.0
+        elif unit == "B":
+            return num * 1000000000.0
+        return num
+    except (ValueError, TypeError):
+        return default
 
 class ViralPostAnalyzer:
     """
@@ -22,10 +49,13 @@ class ViralPostAnalyzer:
 
     def calculate_score(self, post: Dict[str, Any]) -> float:
         platform = str(post.get("platform", "x")).lower()
-        likes = float(post.get("likes", post.get("upvotes", 0)))
-        reposts = float(post.get("retweets", post.get("reposts", post.get("shares", 0))))
-        replies = float(post.get("replies", post.get("comments", 0)))
-        views = float(post.get("views", 0))
+        likes = _safe_float(post.get("likes") if post.get("likes") is not None else post.get("upvotes", 0))
+        reposts = _safe_float(
+            post.get("retweets") if post.get("retweets") is not None
+            else (post.get("reposts") if post.get("reposts") is not None else post.get("shares", 0))
+        )
+        replies = _safe_float(post.get("replies") if post.get("replies") is not None else post.get("comments", 0))
+        views = _safe_float(post.get("views", 0))
 
         # 針對不同社群平台特性之加權計分模型
         if platform == "youtube":
@@ -58,6 +88,11 @@ class ViralPostAnalyzer:
         """
         text = post.get("text", "")
 
+        # 確保具備 ISO 時間戳記以相容 postlens
+        created_at = post.get("created_at")
+        if not created_at or str(created_at).lower() in ["recent", "now", "today"]:
+            created_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
         # 規則與語意啟發式分析（若未掛接雲端 LLM 時的快速判定）
         category = self._detect_category(text)
         hook_style = self._detect_hook_style(text)
@@ -66,6 +101,7 @@ class ViralPostAnalyzer:
 
         return {
             **post,
+            "created_at": created_at,
             "topic_category": category,
             "hook_style": hook_style,
             "viral_factors": viral_factors,
@@ -120,18 +156,25 @@ class ViralPostAnalyzer:
             json.dump(analyzed_posts, f, ensure_ascii=False, indent=2)
         logger.info(f"結構化分析成果已寫入: {json_path}")
 
-        # 輸出 CSV
-        if analyzed_posts:
-            keys = [
-                "platform", "author", "engagement_score", "likes", "retweets", "replies", "views",
-                "topic_category", "hook_style", "viral_factors", "text", "imitation_guide"
-            ]
-            with open(csv_path, "w", encoding="utf-8-sig", newline="") as f:
-                writer = csv.DictWriter(f, fieldnames=keys, extrasaction="ignore")
-                writer.writeheader()
-                for p in analyzed_posts:
-                    row = {**p}
-                    if isinstance(row.get("viral_factors"), list):
-                        row["viral_factors"] = " | ".join(row["viral_factors"])
-                    writer.writerow(row)
-            logger.info(f"爆款主題清單已匯出至 CSV: {csv_path}")
+        # 輸出 CSV（包含 created_at 等所有 postlens 相容欄位）
+        keys = [
+            "id", "platform", "author", "created_at", "text", "likes", "retweets", "reposts",
+            "replies", "views", "engagement_score", "topic_category", "hook_style",
+            "viral_factors", "imitation_guide", "url"
+        ]
+        with open(csv_path, "w", encoding="utf-8-sig", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=keys, extrasaction="ignore")
+            writer.writeheader()
+            for p in analyzed_posts:
+                row = {**p}
+                # 統一 reposts 與 retweets 欄位別名
+                if "retweets" in row and "reposts" not in row:
+                    row["reposts"] = row["retweets"]
+                elif "reposts" in row and "retweets" not in row:
+                    row["retweets"] = row["reposts"]
+                if not row.get("id"):
+                    row["id"] = f"{row.get('platform', 'post')}_{row.get('author', 'user')}_{abs(hash(row.get('text', ''))) % 100000}"
+                if isinstance(row.get("viral_factors"), list):
+                    row["viral_factors"] = " | ".join(row["viral_factors"])
+                writer.writerow(row)
+        logger.info(f"爆款主題清單已匯出至 CSV: {csv_path}")

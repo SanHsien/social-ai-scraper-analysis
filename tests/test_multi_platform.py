@@ -71,5 +71,50 @@ class MultiPlatformTests(unittest.TestCase):
         self.assertIn("x", cfg["platforms"])
         self.assertIn("threads", cfg["platforms"])
 
+    def test_safe_float_and_scoring_resilience(self):
+        from analyzer import _safe_float
+        self.assertEqual(_safe_float(None), 0.0)
+        self.assertEqual(_safe_float("1,500"), 1500.0)
+        self.assertEqual(_safe_float("2.5K"), 2500.0)
+        self.assertEqual(_safe_float("1.2M"), 1200000.0)
+        self.assertEqual(_safe_float("invalid"), 0.0)
+
+        analyzer = ViralPostAnalyzer()
+        # Post with None and string fields
+        post_with_none = {"platform": "x", "likes": None, "retweets": "1,200", "replies": "50"}
+        score = analyzer.calculate_score(post_with_none)
+        self.assertEqual(score, 0.0 * 1.0 + 1200.0 * 2.5 + 50.0 * 1.5)
+
+    def test_export_and_postlens_interoperability(self):
+        import tempfile
+        import os
+        from pathlib import Path
+        from postlens.loaders import load_csv
+
+        analyzer = ViralPostAnalyzer()
+        test_posts = [
+            {
+                "platform": "threads",
+                "author": "tester",
+                "text": "Hello world post",
+                "likes": 100,
+                "retweets": 20,
+                "replies": 10,
+                "created_at": "2026-10-15T12:00:00Z"
+            }
+        ]
+        analyzed = [analyzer.analyze_post_content(p) for p in test_posts]
+        with tempfile.TemporaryDirectory() as tmpdir:
+            json_p = os.path.join(tmpdir, "out.json")
+            csv_p = os.path.join(tmpdir, "out.csv")
+            analyzer.export_results(analyzed, json_p, csv_p)
+            self.assertTrue(os.path.exists(csv_p))
+
+            # Test postlens can load the exported CSV without error
+            loaded_posts = load_csv(Path(csv_p))
+            self.assertEqual(len(loaded_posts), 1)
+            self.assertEqual(loaded_posts[0].likes, 100)
+            self.assertEqual(loaded_posts[0].text, "Hello world post")
+
 if __name__ == "__main__":
     unittest.main()

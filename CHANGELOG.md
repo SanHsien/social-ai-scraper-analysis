@@ -20,7 +20,16 @@
 - 於相關 Markdown 文件（`AGENTS.md`、`CLAUDE.md`、`README.md`、`README.en.md`）增訂最高硬閘門：嚴禁任何 AI Agent 未經開發者同意擅自改寫專案目的、將核心功能降級或自我設限。
 - 擴展為全主流社群平台抓取與分析架構：支援 X (Twitter)、Threads、Instagram、Facebook、YouTube、Reddit。
 - 實作「特定帳號監控 (Account Mode)」與「全網熱門廣泛探索 (Trending Discovery Mode)」雙模式，支援按關鍵字或話題全網探索熱門貼文。
-- 新增 `scrapers/multi_platform_scraper.py` 與 `tests/test_multi_platform.py` 單元測試套件（通過 29 項測試）。
+- 新增 `scrapers/multi_platform_scraper.py` 與 `tests/test_multi_platform.py` 單元測試套件（通過 31 項測試）。
+- 新增全面程式碼審查報告文件 `REVIEW.md`。
+
+### 修正
+
+- 修復 `viral_insights.csv` 缺少 `created_at` 欄位導致無法直接傳入 `postlens` 分析之問題。
+- 修復 `analyzer.py` 與 `agent_reach_scraper.py` 在互動指標為 `None` 或格式化字串時引發的轉換例外。
+- 移除 `workflow_example.py` 平台帳號上限寫死為 3 個之限制，新增 `--max-targets` 與 `--run-postlens` 參數。
+- 修復社群熱門搜尋關鍵字未經 URL 編碼之問題。
+- 修復部分備援數據輸出非標準時間格式之問題。
 
 ## 2026-10-16
 

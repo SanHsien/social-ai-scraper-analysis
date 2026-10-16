@@ -46,6 +46,10 @@ def parse_args():
                         help="目標帳號清單 JSON 檔路徑")
     parser.add_argument("--max-posts", type=int, default=3,
                         help="每個平台/目標抓取的貼文數量")
+    parser.add_argument("--max-targets", type=int, default=None,
+                        help="每個平台爬取的目標帳號上限 (預設全數爬取)")
+    parser.add_argument("--run-postlens", action="store_true", default=False,
+                        help="分析完成後自動調用 postlens 產出 Markdown 統計報表")
     parser.add_argument("--headless", action="store_true", default=True,
                         help="無頭瀏覽器模式")
     parser.add_argument("--proxy", default=None,
@@ -114,7 +118,8 @@ def main():
             if not accounts:
                 accounts = ["sample_user"]
 
-            for acc in accounts[:3]:
+            target_accounts = accounts[:args.max_targets] if args.max_targets else accounts
+            for acc in target_accounts:
                 posts = scraper.fetch_account_posts(p, acc, max_posts=args.max_posts)
                 all_posts.extend(posts)
     else:
@@ -163,6 +168,15 @@ def main():
     print(f"   - JSON 檔案: {os.path.abspath(args.output_json)}")
     print(f"   - CSV 檔案 : {os.path.abspath(args.output_csv)}")
     print("=" * 70)
+
+    if args.run_postlens:
+        print("\n[*] 正在透過 postlens 分析引擎生成統計報表...")
+        try:
+            from postlens.cli import main as postlens_main
+            postlens_main(["analyze", args.output_csv, "--out", "out"])
+            print(f"[+] postlens 報表已生成於: {os.path.abspath('out/report.md')}")
+        except Exception as e:
+            logger.warning(f"執行 postlens 報表生成發生異常: {e}")
 
 if __name__ == "__main__":
     main()

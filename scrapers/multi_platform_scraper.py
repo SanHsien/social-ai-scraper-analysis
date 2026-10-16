@@ -128,6 +128,8 @@ class MultiPlatformScraper:
             page = StealthyFetcher.fetch(url, headless=self.headless, network_idle=True, timeout=self.timeout * 1000)
             posts = []
             elements = page.css('div[data-pressable-container="true"]', auto_save=True) or page.css('article', auto_save=True)
+            from datetime import datetime, timezone
+            now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             for el in elements[:max_posts]:
                 text = el.text.strip()
                 if len(text) > 20:
@@ -138,7 +140,7 @@ class MultiPlatformScraper:
                         "likes": 850,
                         "retweets": 120,
                         "replies": 95,
-                        "created_at": "recent",
+                        "created_at": now_iso,
                         "source": "scrapling_threads"
                     })
             return posts or self._fallback_threads_posts(clean_user, max_posts)
@@ -147,7 +149,9 @@ class MultiPlatformScraper:
             return self._fallback_threads_posts(clean_user, max_posts)
 
     def _search_threads_trending(self, query: str, max_posts: int) -> List[Dict[str, Any]]:
-        search_url = f"https://www.threads.com/search?q={query}"
+        import urllib.parse
+        encoded_q = urllib.parse.quote_plus(query)
+        search_url = f"https://www.threads.com/search?q={encoded_q}"
         logger.info(f"探索 Threads 熱門內容: {search_url}")
         return [
             {

@@ -50,17 +50,37 @@ class AgentReachScraper:
             logger.warning(f"Agent Reach 提取失敗: {e}")
             return self._fallback_data(clean_user, count)
 
+    def _safe_int(self, val: Any) -> int:
+        if val is None:
+            return 0
+        if isinstance(val, (int, float)):
+            return int(val)
+        val_str = str(val).replace(",", "").strip().upper()
+        match = re.search(r"([\d\.]+)([KMB]?)", val_str)
+        if not match:
+            return 0
+        num = float(match.group(1))
+        unit = match.group(2)
+        if unit == "K":
+            return int(num * 1000)
+        elif unit == "M":
+            return int(num * 1000000)
+        return int(num)
+
     def _normalize_agent_reach_data(self, raw_data: Any, username: str) -> List[Dict[str, Any]]:
+        from datetime import datetime, timezone
+        now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         items = raw_data if isinstance(raw_data, list) else raw_data.get("posts", [])
         results = []
         for item in items:
+            created_at = item.get("created_at") or now_iso
             results.append({
                 "author": username,
                 "text": item.get("text") or item.get("content", ""),
-                "likes": int(item.get("likes", item.get("favorite_count", 0))),
-                "retweets": int(item.get("retweets", item.get("retweet_count", 0))),
-                "replies": int(item.get("replies", item.get("reply_count", 0))),
-                "created_at": item.get("created_at", ""),
+                "likes": self._safe_int(item.get("likes") if item.get("likes") is not None else item.get("favorite_count", 0)),
+                "retweets": self._safe_int(item.get("retweets") if item.get("retweets") is not None else item.get("retweet_count", 0)),
+                "replies": self._safe_int(item.get("replies") if item.get("replies") is not None else item.get("reply_count", 0)),
+                "created_at": created_at,
                 "source": "agent_reach"
             })
         return results
