@@ -30,6 +30,7 @@
 - 移除 `workflow_example.py` 平台帳號上限寫死為 3 個之限制，新增 `--max-targets` 與 `--run-postlens` 參數。
 - 修復社群熱門搜尋關鍵字未經 URL 編碼之問題。
 - 修復部分備援數據輸出非標準時間格式之問題。
+- 移除 `REVIEW.md` 行尾多餘空白字元，修復 GitHub Actions Windows CI 閘門（`git diff --check`）失敗問題。
 
 ## 2026-10-16
 

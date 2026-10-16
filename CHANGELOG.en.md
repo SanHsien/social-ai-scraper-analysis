@@ -30,6 +30,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest 
 - Removed hardcoded 3-account limit per platform in `workflow_example.py` by adding `--max-targets` and `--run-postlens`.
 - Fixed unescaped URL query parameters in social trending search.
 - Fixed non-standard datetime outputs in fallback scrapers.
+- Removed trailing whitespace in `REVIEW.md`, fixing GitHub Actions Windows CI gate failure on `git diff --check`.
 
 ## 2026-10-16
 
