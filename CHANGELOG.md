@@ -13,7 +13,7 @@
 ### 維護
 
 - CI 的 actions 改釘 commit SHA（`actions/checkout` v7.0.1、`actions/setup-python` v7.1.0），checkout 設 `persist-credentials: false`。
-- 新增 `.github/dependabot.yml`（github-actions、pip，每週，冷卻 7 天）與 CodeQL 掃描（python、actions）。
+- 新增 `.github/dependabot.yml`（github-actions，每週，冷卻 7 天；requirements.txt 只宣告 `>=` 下限，故不納入 pip）與 CodeQL 掃描（python、actions）。
 
 ## [1.1.0] - 2026-10-19
 

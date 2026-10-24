@@ -13,7 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest 
 ### Maintenance
 
 - CI actions are pinned to commit SHAs (`actions/checkout` v7.0.1, `actions/setup-python` v7.1.0); checkout sets `persist-credentials: false`.
-- Added `.github/dependabot.yml` (github-actions and pip, weekly, 7-day cooldown) and CodeQL scanning (python, actions).
+- Added `.github/dependabot.yml` (github-actions, weekly, 7-day cooldown; pip is left out because requirements.txt only declares `>=` floors) and CodeQL scanning (python, actions).
 
 ## [1.1.0] - 2026-10-19
 

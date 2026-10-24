@@ -9,12 +9,6 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
-  - package-ecosystem: pip
-    directory: /
-    schedule:
-      interval: weekly
-    cooldown:
-      default-days: 7
-    groups:
-      pip:
-        patterns: ["*"]
+# pip is intentionally not listed: requirements.txt only declares `>=` floors, so
+# installs already resolve to the latest releases; version-update PRs would only
+# raise floors (e.g. pandas>=3 drops Python 3.10, which the CI matrix still targets).
