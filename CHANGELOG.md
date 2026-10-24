@@ -4,6 +4,17 @@
 
 格式參考 [Keep a Changelog](https://keepachangelog.com/zh-TW/1.1.0/)，新的在上面。
 
+## [Unreleased]
+
+### 修正
+
+- `tools/dev_check.ps1`：CI 傳入的基準 commit 已不存在（例如歷史被改寫）時，`git rev-parse` 的非零 exit code 會外洩成整體失敗；改為全部閘門通過後明確 `exit 0`。
+
+### 維護
+
+- CI 的 actions 改釘 commit SHA（`actions/checkout` v7.0.1、`actions/setup-python` v7.1.0），checkout 設 `persist-credentials: false`。
+- 新增 `.github/dependabot.yml`（github-actions、pip，每週，冷卻 7 天）與 CodeQL 掃描（python、actions）。
+
 ## [1.1.0] - 2026-10-19
 
 ### 新增

@@ -29,3 +29,5 @@ if (-not [string]::IsNullOrWhiteSpace($BaseRef) -and $BaseRef -notmatch '^0+$') 
     }
 }
 Write-Host 'dev_check: all gates passed'
+# A missing base commit (e.g. rewritten history) leaves rev-parse's non-zero exit code behind; do not fail on it.
+exit 0

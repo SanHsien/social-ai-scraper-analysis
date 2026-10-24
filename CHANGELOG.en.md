@@ -4,6 +4,17 @@ English | [中文版](CHANGELOG.md)
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest first.
 
+## [Unreleased]
+
+### Fixed
+
+- `tools/dev_check.ps1`: when the base commit passed by CI no longer exists (e.g. rewritten history), the non-zero exit code of `git rev-parse` leaked out as an overall failure; the script now exits 0 explicitly once all gates pass.
+
+### Maintenance
+
+- CI actions are pinned to commit SHAs (`actions/checkout` v7.0.1, `actions/setup-python` v7.1.0); checkout sets `persist-credentials: false`.
+- Added `.github/dependabot.yml` (github-actions and pip, weekly, 7-day cooldown) and CodeQL scanning (python, actions).
+
 ## [1.1.0] - 2026-10-19
 
 ### Added
