@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -26,8 +27,13 @@ class Rules:
 def _compile(name: str, spec: dict) -> list[re.Pattern]:
     if not isinstance(spec, dict):
         raise ValueError(f"rule {name!r} must be an object with 'keywords' and/or 'patterns'")
-    pats = [re.compile(re.escape(str(k)), re.IGNORECASE) for k in spec.get("keywords", [])]
-    for p in spec.get("patterns", []):
+    keywords = spec.get("keywords", [])
+    patterns = spec.get("patterns", [])
+    for label, value in (("keywords", keywords), ("patterns", patterns)):
+        if not isinstance(value, list):  # 字串會被逐字拆開，變成每個字都是一條規則
+            raise ValueError(f"rule {name!r}: '{label}' must be a list of strings")
+    pats = [re.compile(re.escape(str(k)), re.IGNORECASE) for k in keywords]
+    for p in patterns:
         try:
             pats.append(re.compile(p, re.IGNORECASE | re.MULTILINE))
         except re.error as exc:
@@ -41,11 +47,16 @@ def load_rules(path: Path | None) -> Rules:
     if path is None:
         return Rules()
     raw = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+    if not isinstance(raw, dict):
+        raise ValueError("rules file must be a JSON object with 'weights', 'topics' and/or 'hooks'")
+    for section in ("weights", "topics", "hooks"):
+        if not isinstance(raw.get(section, {}), dict):
+            raise ValueError(f"rules '{section}' must be an object")
     weights = dict(DEFAULT_WEIGHTS)
     for k, v in raw.get("weights", {}).items():
         if k not in METRICS:
             raise ValueError(f"unknown weight {k!r}; expected one of {', '.join(METRICS)}")
-        if not isinstance(v, (int, float)) or v < 0:
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0:
             raise ValueError(f"weight {k!r} must be a non-negative number")
         weights[k] = float(v)
     return Rules(
