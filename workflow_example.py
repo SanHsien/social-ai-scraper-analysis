@@ -34,6 +34,10 @@ logger = logging.getLogger("MultiPlatformScraper")
 
 ALL_PLATFORMS = ["x", "threads", "instagram", "facebook", "youtube", "reddit"]
 
+def format_metric(value) -> str:
+    """互動數缺少（None）時顯示「未取得」，不顯示 None 或 0。"""
+    return "未取得" if value is None else str(value)
+
 def parse_args():
     parser = argparse.ArgumentParser(description="跨主流社群平台 AI 爆款自動抓取與主題分析工具")
     parser.add_argument("--mode", choices=["accounts", "trending"], default="accounts",
@@ -154,7 +158,7 @@ def main():
         plat = str(item.get("platform", "x")).upper()
         author = item.get("author") or item.get("target", "unknown")
         print(f"\n【Top {idx}】平台: [{plat}] | 作者/來源: @{author} | 互動分: {item.get('engagement_score')}")
-        metrics_str = f"👍 {item.get('likes')} | 🔁 {item.get('retweets')} | 💬 {item.get('replies')}"
+        metrics_str = f"👍 {format_metric(item.get('likes'))} | 🔁 {format_metric(item.get('retweets'))} | 💬 {format_metric(item.get('replies'))}"
         if item.get("views"):
             metrics_str += f" | 👁️ {item.get('views')}"
         print(f"📊 數據: {metrics_str}")

@@ -137,9 +137,9 @@ class MultiPlatformScraper:
                         "platform": "threads",
                         "author": clean_user,
                         "text": text,
-                        "likes": 850,
-                        "retweets": 120,
-                        "replies": 95,
+                        "likes": None,  # 頁面解析不到互動數就是未知，不填假數字
+                        "retweets": None,
+                        "replies": None,
                         "created_at": now_iso,
                         "source": "scrapling_threads"
                     })

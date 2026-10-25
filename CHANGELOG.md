@@ -8,6 +8,7 @@
 
 ### 修正
 
+- Threads 真實抓取與 Scrapling 純文字解析不再捏造互動數（原本寫死 850／120／95 或依順位推算 `120+idx*45`），抓不到就是 `None`；終端機摘要顯示「未取得」。分數計算仍把未知當 0 以便排序，但輸出 JSON 為 `null`、CSV 為空欄。
 - Agent Reach：`_safe_int` 漏了 `import re`，互動數是字串（如 `1.5K`）時 NameError，整批資料被備援假資料取代；並補上 `B` 單位。
 - Scrapling：互動數文字像 `1.2.3` 時整則推文被丟掉，改為該欄位算 0。
 - postlens：JSON 貼文列不是物件時回報 `DataError`（原本 `AttributeError` traceback）。

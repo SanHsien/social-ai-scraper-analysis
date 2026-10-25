@@ -141,9 +141,9 @@ class ScraplingSocialScraper:
             posts.append({
                 "author": username,
                 "text": p,
-                "likes": 120 + idx * 45,
-                "retweets": 30 + idx * 12,
-                "replies": 15 + idx * 5,
+                "likes": None,  # 純文字解析不出互動數就是未知，不推算
+                "retweets": None,
+                "replies": None,
                 "created_at": now_iso,
                 "source": "scrapling_text_fallback"
             })

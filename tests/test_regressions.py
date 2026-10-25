@@ -166,5 +166,58 @@ class MarkdownUrlTests(unittest.TestCase):
         self.assertIn("(https://en.wikipedia.org/wiki/Foo_%28bar%29%20baz)", md)
 
 
+class UnknownMetricsTests(unittest.TestCase):
+    """抓不到的互動數必須是 None，不能寫死或推算出數字。"""
+
+    METRICS = ("likes", "retweets", "replies")
+
+    def test_scrapling_text_fallback_does_not_invent_metrics(self):
+        page = mock.Mock(text="這是一段足夠長的段落文字，用來通過三十字元的長度門檻，內容本身不含任何互動數。\n\n"
+                              "第二段同樣夠長的文字，用來確認不同順位的段落也不會被推算出互動數字。")
+        posts = ScraplingSocialScraper()._parse_from_page_text(page, "u", 5)
+        self.assertEqual(len(posts), 2)
+        for p in posts:
+            for m in self.METRICS:
+                self.assertIsNone(p[m], m)
+
+    def test_threads_live_scrape_does_not_invent_metrics(self):
+        from scrapers.multi_platform_scraper import MultiPlatformScraper
+        el = mock.Mock(text="這是一則足夠長的 Threads 貼文內文，用來通過長度門檻。")
+        page = mock.Mock()
+        page.css.return_value = [el]
+        fetchers = mock.Mock()
+        fetchers.StealthyFetcher.fetch.return_value = page
+        scraper = MultiPlatformScraper()
+        scraper.scrapling._scrapling_available = True
+        with mock.patch.dict(sys.modules, {"scrapling": mock.Mock(), "scrapling.fetchers": fetchers}):
+            posts = scraper._fetch_threads_account("someone", 3)
+        self.assertEqual(posts[0]["source"], "scrapling_threads")
+        for m in self.METRICS:
+            self.assertIsNone(posts[0][m], m)
+
+    def test_unknown_metrics_flow_through_analysis_and_export(self):
+        import os
+        a = ViralPostAnalyzer()
+        posts = [{"platform": "threads", "author": "a", "text": "no numbers here", "likes": None,
+                  "retweets": None, "replies": None, "created_at": "2026-01-01T00:00:00Z"},
+                 {"platform": "threads", "author": "b", "text": "has numbers", "likes": 10,
+                  "retweets": 1, "replies": 2, "created_at": "2026-01-02T00:00:00Z"}]
+        ranked = a.rank_and_filter(posts, top_ratio=1.0, min_count=2)
+        self.assertEqual(ranked[0]["author"], "b")
+        self.assertEqual(ranked[1]["engagement_score"], 0.0)
+        analyzed = [a.analyze_post_content(p) for p in ranked]
+        d = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, d, ignore_errors=True)
+        a.export_results(analyzed, str(d / "o.json"), str(d / "o.csv"))
+        self.assertIsNone(json.loads((d / "o.json").read_text(encoding="utf-8"))[1]["likes"])
+        self.assertEqual(len(loaders.load_csv(d / "o.csv")), 2)
+
+    def test_format_metric_shows_unknown(self):
+        import workflow_example as wf
+        self.assertEqual(wf.format_metric(None), "未取得")
+        self.assertEqual(wf.format_metric(0), "0")
+        self.assertEqual(wf.format_metric(1200), "1200")
+
+
 if __name__ == "__main__":
     unittest.main()
