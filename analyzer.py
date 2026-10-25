@@ -113,14 +113,14 @@ class ViralPostAnalyzer:
     def _has_keyword(text: str, keywords: List[str]) -> bool:
         """4 字元以上的關鍵字維持子字串比對（#AItools、devtools 仍命中）。
         3 字元以內的 ASCII 關鍵字（"ai"）容易誤中 said、email、maintain：
-        小寫要在單字開頭且後面不接英文字母（AI2 可以）；大寫 AI 前後不接大寫字母
-        （#GenerativeAI、AIagent 可以，SAID、EMAIL 不行）。"""
+        小寫要在單字開頭且後面不接英文字母（AI2 可以），或是 #ai 開頭的標籤；
+        大寫 AI 前面不接大寫、後面不接「大寫+非小寫」（#GenerativeAI、AIagent、#AIArt 可以，SAID、EMAIL、AIDS 不行）。"""
         text_lower = text.lower()
         for k in keywords:
             if not k.isascii() or len(k) > 3:
                 if k in text_lower:
                     return True
-            elif re.search(r"(?<![a-z0-9])" + re.escape(k) + r"(?![a-z])", text_lower)                     or re.search(r"(?<![A-Z])" + re.escape(k.upper()) + r"(?![A-Z])", text):
+            elif re.search(r"(?:(?<![a-z0-9])|#)" + re.escape(k) + r"(?![a-z])", text_lower)                     or re.search(r"#" + re.escape(k), text_lower)                     or re.search(r"(?<![A-Z])" + re.escape(k.upper()) + r"(?![A-Z](?![a-z]))", text):
                 return True
         return False
 

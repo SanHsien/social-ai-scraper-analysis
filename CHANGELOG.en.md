@@ -11,8 +11,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest 
 - Agent Reach: `_safe_int` was missing `import re`, so string metrics such as `1.5K` raised NameError and the whole batch was replaced by fallback sample data; also added the `B` unit.
 - Scrapling: metric text like `1.2.3` dropped the whole tweet; that field now counts as 0.
 - postlens: a JSON post row that is not an object raises `DataError` (was an `AttributeError` traceback).
-- postlens rules file: `keywords`/`patterns` given as a string were split per character (`"AI"` matched any post containing A or I); this now errors, as do wrong section types, NaN weights and boolean weights.
-- `analyzer.py`: `text: None` no longer crashes; hook detection skips leading blank lines; short English keywords such as `ai` need a whole-word match (no more hits on `said`, `email`; `OpenAI`, `AIGC`, `GenAI`, `AI2`, `#AItools`, `#GenerativeAI`, `devtools` still count); a rules weight of `true`/`false` now errors (was treated as 1/0); generated ids use SHA-1 instead of the per-process salted `hash()`.
+- postlens rules file: `keywords`/`patterns` given as a string were split per character (`"AI"` matched any post containing A or I); this now errors, as do wrong section types, NaN weights and boolean weights (`true`/`false` used to be treated as 1/0).
+- `analyzer.py`: `text: None` no longer crashes; hook detection skips leading blank lines; short English keywords such as `ai` need a whole-word match (no more hits on `said`, `email`; `OpenAI`, `AIGC`, `GenAI`, `AI2`, `#AItools`, `#AIArt`, `#ainews`, `#GenerativeAI`, `devtools` still count); generated ids use SHA-1 instead of the per-process salted `hash()`.
 - `workflow_example.py`: `--run-postlens` no longer prints "report generated" when postlens fails; `--headless` could not be turned off, added `--no-headless`.
 - postlens CLI: an unwritable output directory exits 2 with an error (was a traceback); report links no longer break on URLs containing parentheses or spaces.
 - `tools/check_links.py` docstring now describes this repo.
