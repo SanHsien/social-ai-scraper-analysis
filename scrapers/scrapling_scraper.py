@@ -118,7 +118,10 @@ class ScraplingSocialScraper:
         match = re.search(r"([\d\.]+)([KMB]?)", text)
         if not match:
             return 0
-        num = float(match.group(1))
+        try:
+            num = float(match.group(1))
+        except ValueError:
+            return 0
         unit = match.group(2)
         if unit == "K":
             return int(num * 1000)
