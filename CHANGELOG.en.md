@@ -8,7 +8,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest 
 
 ### Fixed
 
-- Live Threads scraping and Scrapling's plain-text parsing no longer fabricate engagement numbers (hard-coded 850/120/95, or `120+idx*45` by position); unknown metrics are `None`, shown as 未取得 (not obtained) in the terminal summary. Scoring still counts unknown as 0 for ranking, but JSON output has `null` and CSV an empty cell.
+- Live Threads scraping and Scrapling's plain-text parsing no longer fabricate engagement numbers (hard-coded 850/120/95, or `120+idx*45` by position); unknown metrics are `None`, shown as 未取得 (not obtained) in the terminal summary. Scoring still counts unknown as 0 for ranking, but JSON output has `null` and CSV an empty cell (postlens still reads missing likes/replies/reposts/quotes as 0 on load; only views keep `None`).
 - Agent Reach: `_safe_int` was missing `import re`, so string metrics such as `1.5K` raised NameError and the whole batch was replaced by fallback sample data; also added the `B` unit.
 - Scrapling: metric text like `1.2.3` dropped the whole tweet; that field now counts as 0.
 - postlens: a JSON post row that is not an object raises `DataError` (was an `AttributeError` traceback).
