@@ -50,8 +50,8 @@ def parse_args():
                         help="每個平台爬取的目標帳號上限 (預設全數爬取)")
     parser.add_argument("--run-postlens", action="store_true", default=False,
                         help="分析完成後自動調用 postlens 產出 Markdown 統計報表")
-    parser.add_argument("--headless", action="store_true", default=True,
-                        help="無頭瀏覽器模式")
+    parser.add_argument("--headless", action=argparse.BooleanOptionalAction, default=True,
+                        help="無頭瀏覽器模式（預設開啟；用 --no-headless 顯示瀏覽器視窗）")
     parser.add_argument("--proxy", default=None,
                         help="Proxy 代理伺服器位置 (例如 http://127.0.0.1:7890)")
     parser.add_argument("--output-json", default="results.json",
@@ -173,8 +173,11 @@ def main():
         print("\n[*] 正在透過 postlens 分析引擎生成統計報表...")
         try:
             from postlens.cli import main as postlens_main
-            postlens_main(["analyze", args.output_csv, "--out", "out"])
-            print(f"[+] postlens 報表已生成於: {os.path.abspath('out/report.md')}")
+            code = postlens_main(["analyze", args.output_csv, "--out", "out"])
+            if code == 0:
+                print(f"[+] postlens 報表已生成於: {os.path.abspath('out/report.md')}")
+            else:
+                logger.warning(f"postlens 報表生成失敗（結束碼 {code}），請看上方錯誤訊息")
         except Exception as e:
             logger.warning(f"執行 postlens 報表生成發生異常: {e}")
 
