@@ -3,6 +3,7 @@ Agent Reach 模組：為 AI Agent 打造的跨平台零 API 費用社群資料�
 """
 
 import json
+import re
 import shutil
 import subprocess
 import logging
@@ -59,12 +60,17 @@ class AgentReachScraper:
         match = re.search(r"([\d\.]+)([KMB]?)", val_str)
         if not match:
             return 0
-        num = float(match.group(1))
+        try:
+            num = float(match.group(1))
+        except ValueError:
+            return 0
         unit = match.group(2)
         if unit == "K":
             return int(num * 1000)
         elif unit == "M":
             return int(num * 1000000)
+        elif unit == "B":
+            return int(num * 1000000000)
         return int(num)
 
     def _normalize_agent_reach_data(self, raw_data: Any, username: str) -> List[Dict[str, Any]]:
