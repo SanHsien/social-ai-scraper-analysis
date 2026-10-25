@@ -19,6 +19,8 @@
 
 ## 2. 發現之缺陷與修正清單 (Bugs & Vulnerabilities Fixed)
 
+> 修復狀態：五項皆已修復。原修復 commit 在 2026-10-24 歷史壓縮（單一 `Initial commit`）後無法對應，改以 2026-10-25 於 `a61c182` 複驗為準。
+
 ### ① 缺陷 1：跨模組資料流斷裂（`viral_insights.csv` 缺少 `created_at`）
 - **嚴重性**：高（High）
 - **檔案**：`analyzer.py`
@@ -65,6 +67,7 @@
 ### 單元測試 (`python -m unittest discover -s tests -v`)
 - **測試總數**：31 項
 - **執行結果**：全數通過（31 OK，0 Failures，0 Errors）。
+- **2026-10-25 複驗**：main `a61c182` 上五項缺陷的修復皆仍在程式碼中；測試已增至 36 項、全數通過，連結檢查 0 失效。
 
 ### 文件相對連結檢查 (`python tools/check_links.py`)
 - **檢查文件數**：7 份 Markdown 檔案（含 `REVIEW.md`）。
