@@ -8,6 +8,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest 
 
 ### Fixed
 
+- Agent Reach: `_safe_int` was missing `import re`, so string metrics such as `1.5K` raised NameError and the whole batch was replaced by fallback sample data; also added the `B` unit.
+- Scrapling: metric text like `1.2.3` dropped the whole tweet; that field now counts as 0.
+- postlens: a JSON post row that is not an object raises `DataError` (was an `AttributeError` traceback).
+- postlens rules file: `keywords`/`patterns` given as a string were split per character (`"AI"` matched any post containing A or I); this now errors, as do wrong section types, NaN weights and boolean weights.
+- `analyzer.py`: `text: None` no longer crashes; hook detection skips leading blank lines; short English keywords such as `ai` need a whole-word match (no more hits on `said`, `email`); generated ids use SHA-1 instead of the per-process salted `hash()`.
+- `workflow_example.py`: `--run-postlens` no longer prints "report generated" when postlens fails; `--headless` could not be turned off, added `--no-headless`.
+- postlens CLI: an unwritable output directory exits 2 with an error (was a traceback); report links no longer break on URLs containing parentheses or spaces.
+- `tools/check_links.py` docstring now describes this repo.
 - `tools/dev_check.ps1`: when the base commit passed by CI no longer exists (e.g. rewritten history), the non-zero exit code of `git rev-parse` leaked out as an overall failure; the script now exits 0 explicitly once all gates pass.
 
 ### Maintenance

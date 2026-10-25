@@ -8,6 +8,14 @@
 
 ### 修正
 
+- Agent Reach：`_safe_int` 漏了 `import re`，互動數是字串（如 `1.5K`）時 NameError，整批資料被備援假資料取代；並補上 `B` 單位。
+- Scrapling：互動數文字像 `1.2.3` 時整則推文被丟掉，改為該欄位算 0。
+- postlens：JSON 貼文列不是物件時回報 `DataError`（原本 `AttributeError` traceback）。
+- postlens 規則檔：`keywords`／`patterns` 寫成字串會被逐字拆開（`"AI"` 變成命中含 A 或 I 的貼文），現在報錯；頂層或各區塊型別錯誤、權重為 NaN／布林也會明確報錯。
+- `analyzer.py`：`text` 為 `None` 不再當掉；開頭鉤子判斷略過前導空行；英文短關鍵字（如 `ai`）需整字命中，不再被 `said`、`email` 觸發；缺 `id` 時產生的 id 改用 SHA-1，不再隨 `PYTHONHASHSEED` 每次執行不同。
+- `workflow_example.py`：`--run-postlens` 失敗時不再印「報表已生成」；`--headless` 原本無法關閉，新增 `--no-headless`。
+- postlens CLI：輸出目錄無法寫入時回報錯誤並結束碼 2（原本 traceback）；報表中網址含括號或空白時連結不再斷掉。
+- `tools/check_links.py` 說明文字改成符合本 repo。
 - `tools/dev_check.ps1`：CI 傳入的基準 commit 已不存在（例如歷史被改寫）時，`git rev-parse` 的非零 exit code 會外洩成整體失敗；改為全部閘門通過後明確 `exit 0`。
 
 ### 維護

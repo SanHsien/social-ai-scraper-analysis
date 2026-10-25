@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """Check every relative link in the repository's Markdown.
 
-This repo is mostly documentation, and it is documentation that points at itself:
-five edition directories, each with its own README, docs, plugin skill and
-reference files, all cross-linking to the root and to each other. Moving or
-renaming a file breaks those links silently -- nothing fails, the link just stops
-resolving, and the next reader finds a 404 instead of the contract they were sent
-to read.
+The Markdown here points at itself: the two READMEs, the two changelogs,
+postlens/README.md and AGENTS.md link to each other and to the sample files.
+Moving or renaming a file breaks those links silently -- nothing fails, the link
+just stops resolving, and the next reader finds a 404.
 
 Only relative links are checked. External URLs are left to a human: this must
 stay offline and deterministic so it can sit inside the canonical gate.
