@@ -78,6 +78,8 @@ def _to_int(value, field: str) -> int | None:
 
 
 def post_from_row(row: dict, where: str) -> Post:
+    if not isinstance(row, dict):
+        raise DataError(f"{where}: expected an object with post fields, got {type(row).__name__}")
     try:
         created = _pick(row, "created_at")
         if created is None:
