@@ -110,20 +110,23 @@ class ViralPostAnalyzer:
         }
 
     @staticmethod
-    def _has_keyword(text_lower: str, keywords: List[str]) -> bool:
-        """ASCII 關鍵字要在單字開頭（"ai" 不能命中 "said"、"email"）；3 字元以內的後面不能緊接英文字母（AI2 可以）。"""
+    def _has_keyword(text: str, keywords: List[str]) -> bool:
+        """4 字元以上的關鍵字維持子字串比對（#AItools、devtools 仍命中）。
+        3 字元以內的 ASCII 關鍵字（"ai"）容易誤中 said、email、maintain：
+        小寫要在單字開頭且後面不接英文字母（AI2 可以）；大寫 AI 前後不接大寫字母
+        （#GenerativeAI、AIagent 可以，SAID、EMAIL 不行）。"""
+        text_lower = text.lower()
         for k in keywords:
-            if k.isascii():
-                tail = r"(?![a-z])" if len(k) <= 3 else ""
-                if re.search(r"(?<![a-z0-9])" + re.escape(k) + tail, text_lower):
+            if not k.isascii() or len(k) > 3:
+                if k in text_lower:
                     return True
-            elif k in text_lower:
+            elif re.search(r"(?<![a-z0-9])" + re.escape(k) + r"(?![a-z])", text_lower)                     or re.search(r"(?<![A-Z])" + re.escape(k.upper()) + r"(?![A-Z])", text):
                 return True
         return False
 
     def _detect_category(self, text: str) -> str:
         text_lower = text.lower()
-        if self._has_keyword(text_lower, ["工具", "tool", "ai", "openai", "aigc", "genai", "開源", "架構", "github", "爬蟲", "代碼", "程式", "prompt", "模型"]):
+        if self._has_keyword(text, ["工具", "tool", "ai", "openai", "aigc", "genai", "開源", "架構", "github", "爬蟲", "代碼", "程式", "prompt", "模型"]):
             return "AI 工具評測與技術架構"
         elif any(k in text_lower for k in ["創業", "賺錢", "自媒體", "一人公司", "商業", "利潤", "變現", "流量", "獲客"]):
             return "一人創業與商業模式"

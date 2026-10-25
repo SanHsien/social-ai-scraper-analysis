@@ -101,7 +101,8 @@ class AnalyzerRobustnessTests(unittest.TestCase):
         self.assertNotEqual(a._detect_category("I said hello, maintain the plan by email"), "AI 工具評測與技術架構")
         self.assertEqual(a._detect_category("New AI tools for developers"), "AI 工具評測與技術架構")
         self.assertEqual(a._detect_category("今天用 ai 寫程式"), "AI 工具評測與技術架構")
-        for text in ("OpenAI released GPT-5", "AIGC trend", "AI2 model", "GenAI roadmap"):
+        for text in ("OpenAI released GPT-5", "AIGC trend", "AI2 model", "GenAI roadmap",
+                     "#AItools", "#GenerativeAI", "#OpenSourceAI", "AIart", "AIagent", "devtools"):
             self.assertEqual(a._detect_category(text), "AI 工具評測與技術架構", text)
 
     def test_generated_ids_are_stable_across_processes(self):
