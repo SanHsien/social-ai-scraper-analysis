@@ -19,6 +19,11 @@ def _cell(text: str) -> str:
     return text.replace("|", "\\|")
 
 
+def _link_target(url: str) -> str:
+    """括號與空白會讓 Markdown 連結提早結束，改成百分比編碼。"""
+    return url.strip().replace(" ", "%20").replace("(", "%28").replace(")", "%29")
+
+
 def _offset(dt) -> str:
     raw = dt.strftime("%z")  # +0800；`%:z` 要 Python 3.12 才有
     return f"{raw[:3]}:{raw[3:5]}"
@@ -77,7 +82,7 @@ def markdown(posts: list[Post], rules: Rules, tz: timezone, excluded_reposts: in
     for p in top:
         text = _cell(_short(p.text))
         if p.url:
-            text = f"[{text}]({p.url})"
+            text = f"[{text}]({_link_target(p.url)})"
         lines.append(f"| {p.created_at.astimezone(tz):%Y-%m-%d} | {p.score:.1f} | {_rate(p.engagement_rate)} | "
                      f"{_cell('、'.join(p.topics))} | {_cell(p.hook)} | {text} |")
     lines += [

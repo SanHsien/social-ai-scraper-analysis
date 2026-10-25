@@ -48,7 +48,11 @@ def main(argv: list[str] | None = None) -> int:
     kept = filter_posts(posts, since, until, args.include_reposts, platforms)
     excluded = 0 if args.include_reposts else sum(p.is_repost for p in posts)
     analyze(kept, rules)
-    paths = write_all(kept, rules, tz, excluded, Path(args.input).name, Path(args.out))
+    try:
+        paths = write_all(kept, rules, tz, excluded, Path(args.input).name, Path(args.out))
+    except OSError as exc:
+        print(f"ERROR: cannot write output to {args.out}: {exc}", file=sys.stderr)
+        return 2
     print(f"analyzed {len(kept)} of {len(posts)} posts")
     for p in paths:
         print(f"wrote {p}")
