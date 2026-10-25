@@ -5,6 +5,7 @@
 
 import re
 import csv
+import hashlib
 import json
 import logging
 from datetime import datetime, timezone
@@ -86,7 +87,7 @@ class ViralPostAnalyzer:
         """
         對單則爆款貼文進行語意維度剖析
         """
-        text = post.get("text", "")
+        text = post.get("text") or ""
 
         # 確保具備 ISO 時間戳記以相容 postlens
         created_at = post.get("created_at")
@@ -108,9 +109,21 @@ class ViralPostAnalyzer:
             "imitation_guide": imitation_guide
         }
 
+    @staticmethod
+    def _has_keyword(text_lower: str, keywords: List[str]) -> bool:
+        """ASCII 關鍵字要在單字開頭（"ai" 不能命中 "said"、"email"）；3 字元以內的還要在單字結尾。"""
+        for k in keywords:
+            if k.isascii():
+                tail = r"(?![a-z0-9])" if len(k) <= 3 else ""
+                if re.search(r"(?<![a-z0-9])" + re.escape(k) + tail, text_lower):
+                    return True
+            elif k in text_lower:
+                return True
+        return False
+
     def _detect_category(self, text: str) -> str:
         text_lower = text.lower()
-        if any(k in text_lower for k in ["工具", "tool", "ai", "開源", "架構", "github", "爬蟲", "代碼", "程式", "prompt", "模型"]):
+        if self._has_keyword(text_lower, ["工具", "tool", "ai", "開源", "架構", "github", "爬蟲", "代碼", "程式", "prompt", "模型"]):
             return "AI 工具評測與技術架構"
         elif any(k in text_lower for k in ["創業", "賺錢", "自媒體", "一人公司", "商業", "利潤", "變現", "流量", "獲客"]):
             return "一人創業與商業模式"
@@ -119,7 +132,8 @@ class ViralPostAnalyzer:
         return "產業乾貨與趨勢觀察"
 
     def _detect_hook_style(self, text: str) -> str:
-        first_line = text.split("\n")[0] if "\n" in text else text[:50]
+        stripped = text.strip()
+        first_line = stripped.split("\n")[0] if "\n" in stripped else stripped[:50]
         if any(k in first_line for k in ["為什麼", "千萬別", "多數人都錯了", "90%", "殘酷真相", "騙局", "秘密"]):
             return "反常識打破認知型 (Contrarian Hook)"
         elif any(k in first_line for k in ["整理了", "清單", "免費送", "打包", "資源", "乾貨", "模板"]):
@@ -173,7 +187,7 @@ class ViralPostAnalyzer:
                 elif "reposts" in row and "retweets" not in row:
                     row["retweets"] = row["reposts"]
                 if not row.get("id"):
-                    row["id"] = f"{row.get('platform', 'post')}_{row.get('author', 'user')}_{abs(hash(row.get('text', ''))) % 100000}"
+                    row["id"] = f"{row.get('platform', 'post')}_{row.get('author', 'user')}_{hashlib.sha1(str(row.get('text') or '').encode('utf-8')).hexdigest()[:10]}"
                 if isinstance(row.get("viral_factors"), list):
                     row["viral_factors"] = " | ".join(row["viral_factors"])
                 writer.writerow(row)
