@@ -101,6 +101,16 @@ class Exits(unittest.TestCase):
         row = _row(latest="0.6.0", deferrals={"scrapling": ("0.5", "reviewed, not now")})
         self.assertTrue(checker.needs_review(row))
 
+    def test_a_patch_release_reopens_a_deferral_written_with_three_parts(self):
+        # Comparison runs at the deferral's own precision: "0.5" would keep
+        # covering 0.5.1, so this repo writes deferredLatest with all three parts.
+        row = _row(latest="0.5.1", deferrals={"scrapling": ("0.5.0", "reviewed, not now")})
+        self.assertTrue(checker.needs_review(row))
+
+    def test_the_repos_own_deferrals_name_a_full_release(self):
+        for name, (latest, _reason) in checker.load_deferrals(ROOT / ".github" / "dependency-deferrals.json").items():
+            self.assertEqual(len(checker.release_key(latest) or ()), 3, name)
+
     def test_an_unreadable_latest_is_a_failed_check_not_an_ok_row(self):
         row = _row(latest=None)
         self.assertTrue(row["check_failed"])

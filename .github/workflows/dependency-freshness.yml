@@ -6,6 +6,7 @@ on:
     paths:
       - requirements.txt
       - tools/check_dependency_freshness.py
+      - tests/test_dependency_freshness.py
       - .github/dependabot.yml
       - .github/dependency-deferrals.json
       - .github/workflows/dependency-freshness.yml
