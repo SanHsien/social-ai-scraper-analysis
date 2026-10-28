@@ -1,0 +1,17 @@
+{
+  "$comment": "每月依賴新鮮度檢查用：已經看過、但這次不調整宣告的決定。deferredLatest 記下當時審視的版本，PyPI 一超過它就自動恢復提醒。",
+  "deferrals": {
+    "scrapling": {
+      "deferredLatest": "0.5",
+      "reviewed": "2026-10-28",
+      "revisit": "next PyPI release",
+      "reason": "Install already resolves to 0.5. Checked offline against 0.5: StealthyFetcher.fetch still accepts headless/network_idle/timeout/proxy, StealthyFetcher.adaptive exists, Selector.css still takes auto_save. Nothing here needs 0.5, so the >=0.3.0 floor (the release that introduced adaptive/auto_save) stays. No live fetch was run."
+    },
+    "scrapegraphai": {
+      "deferredLatest": "2.3.1",
+      "reviewed": "2026-10-28",
+      "revisit": "next PyPI release",
+      "reason": "Install already resolves to 2.3.1. Checked offline against 2.3.1: SmartScraperGraph(prompt, source, config) keeps its signature and still splits 'provider/model' names such as ollama/llama3.2. Nothing here needs 2.x, so the floor stays. Separate finding: the 'ollama_url' config key this repo sets is not read by scrapegraphai (see the 2026-10-28 freshness report)."
+    }
+  }
+}
