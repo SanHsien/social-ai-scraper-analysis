@@ -19,8 +19,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest 
 - `tools/check_links.py` docstring now describes this repo.
 - `tools/dev_check.ps1`: when the base commit passed by CI no longer exists (e.g. rewritten history), the non-zero exit code of `git rev-parse` leaked out as an overall failure; the script now exits 0 explicitly once all gates pass.
 
+### Removed
+
+- Dropped `pandas`, `pydantic` and `python-dotenv` from `requirements.txt`: no code, test, script or install instruction uses them (search evidence in [`docs/DECISIONS.md`](docs/DECISIONS.md)).
+
 ### Maintenance
 
+- Added a monthly dependency freshness check (`tools/check_dependency_freshness.py`, `.github/workflows/dependency-freshness.yml`): `requirements.txt` floors against PyPI, pinned Actions against their latest releases. scrapling and scrapegraphai were checked against their latest releases and deferred; playwright is held; no floor was raised. See [`docs/DECISIONS.md`](docs/DECISIONS.md).
 - CI actions are pinned to commit SHAs (`actions/checkout` v7.0.1, `actions/setup-python` v7.1.0); checkout sets `persist-credentials: false`.
 - Added `.github/dependabot.yml` (github-actions, weekly, 7-day cooldown; pip is left out because requirements.txt only declares `>=` floors) and CodeQL scanning (python, actions).
 

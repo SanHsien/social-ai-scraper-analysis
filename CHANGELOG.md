@@ -19,8 +19,13 @@
 - `tools/check_links.py` 說明文字改成符合本 repo。
 - `tools/dev_check.ps1`：CI 傳入的基準 commit 已不存在（例如歷史被改寫）時，`git rev-parse` 的非零 exit code 會外洩成整體失敗；改為全部閘門通過後明確 `exit 0`。
 
+### 移除
+
+- `requirements.txt` 刪除 `pandas`、`pydantic`、`python-dotenv`：程式、測試、腳本與安裝說明都沒有用到（搜尋證據見 [`docs/DECISIONS.md`](docs/DECISIONS.md)）。
+
 ### 維護
 
+- 新增每月依賴新鮮度檢查（`tools/check_dependency_freshness.py`、`.github/workflows/dependency-freshness.yml`）：比對 `requirements.txt` 的下限與 PyPI、workflow 釘住的 Actions 與最新 release。scrapling、scrapegraphai 對最新版核對過寫延後紀錄，playwright 寫 hold；沒有調高任何下限。決策見 [`docs/DECISIONS.md`](docs/DECISIONS.md)。
 - CI 的 actions 改釘 commit SHA（`actions/checkout` v7.0.1、`actions/setup-python` v7.1.0），checkout 設 `persist-credentials: false`。
 - 新增 `.github/dependabot.yml`（github-actions，每週，冷卻 7 天；requirements.txt 只宣告 `>=` 下限，故不納入 pip）與 CodeQL 掃描（python、actions）。
 

@@ -11,4 +11,5 @@ updates:
         patterns: ["*"]
 # pip is intentionally not listed: requirements.txt only declares `>=` floors, so
 # installs already resolve to the latest releases; version-update PRs would only
-# raise floors (e.g. pandas>=3 drops Python 3.10, which the CI matrix still targets).
+# raise floors, which would drop support the code does not need to drop. Aged floors are
+# reviewed monthly by .github/workflows/dependency-freshness.yml instead.

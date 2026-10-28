@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import check_dependency_freshness as checker  # noqa: E402
 
 
-def _row(name="pandas", minimum="2.0.0", latest="3.1.0", hold="", deferrals=None):
+def _row(name="scrapling", minimum="0.3.0", latest="0.5.0", hold="", deferrals=None):
     package = {
         "name": name,
         "minimum": minimum,
@@ -47,12 +47,12 @@ class VersionComparison(unittest.TestCase):
 class Declarations(unittest.TestCase):
     def test_hold_marker_is_read_off_the_declaring_line(self):
         packages = checker.parse_requirements(
-            "pandas>=2.0.0  # freshness-hold: pandas 3 needs Python 3.11\npydantic>=2.0.0\n",
+            "playwright>=1.40.0  # freshness-hold: CLI only\nscrapling[fetchers]>=0.3.0\n",
             "requirements.txt",
         )
         holds = {p["name"]: p["hold"] for p in packages}
-        self.assertEqual(holds["pydantic"], "")
-        self.assertEqual(holds["pandas"], "pandas 3 needs Python 3.11")
+        self.assertEqual(holds["scrapling"], "")
+        self.assertEqual(holds["playwright"], "CLI only")
 
     def test_extras_are_stripped_from_the_package_name(self):
         packages = checker.parse_requirements("scrapling[fetchers]>=0.3.0\n", "requirements.txt")
@@ -88,17 +88,17 @@ class Exits(unittest.TestCase):
         self.assertIn("REVIEW UPDATE", checker.render_markdown([row]))
 
     def test_a_held_floor_is_reported_but_does_not_ask_for_work(self):
-        row = _row(hold="pandas 3 needs Python 3.11")
+        row = _row(hold="CLI only")
         self.assertFalse(checker.needs_review(row))
-        self.assertIn("HELD: pandas 3 needs Python 3.11", checker.render_markdown([row]))
+        self.assertIn("HELD: CLI only", checker.render_markdown([row]))
 
     def test_a_live_deferral_covers_the_row(self):
-        row = _row(deferrals={"pandas": ("3.1", "reviewed, not now")})
+        row = _row(deferrals={"scrapling": ("0.5", "reviewed, not now")})
         self.assertFalse(checker.needs_review(row))
-        self.assertIn("DEFERRED at 3.1.0", checker.render_markdown([row]))
+        self.assertIn("DEFERRED at 0.5.0", checker.render_markdown([row]))
 
     def test_a_deferral_expires_once_the_release_moves_past_it(self):
-        row = _row(latest="3.2.0", deferrals={"pandas": ("3.1", "reviewed, not now")})
+        row = _row(latest="0.6.0", deferrals={"scrapling": ("0.5", "reviewed, not now")})
         self.assertTrue(checker.needs_review(row))
 
     def test_an_unreadable_latest_is_a_failed_check_not_an_ok_row(self):
@@ -137,7 +137,7 @@ class Exits(unittest.TestCase):
 class Output(unittest.TestCase):
     def test_json_output_round_trips_and_flags_review_items(self):
         payload = json.loads(checker.render_json([_row()], [], None))
-        self.assertEqual(payload["needs_review"], ["pandas"])
+        self.assertEqual(payload["needs_review"], ["scrapling"])
         self.assertFalse(payload["check_failed"])
 
     def test_github_output_marks_attention_for_a_failed_check(self):
