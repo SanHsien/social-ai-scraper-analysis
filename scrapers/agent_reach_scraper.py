@@ -39,14 +39,28 @@ class AgentReachScraper:
 
         try:
             import agent_reach
-            # 若已安裝 agent_reach 函式庫則直接呼叫其 channel
-            from agent_reach.channels.twitter import TwitterChannel
-            channel = TwitterChannel(use_cookies=self.use_cookies)
-            tweets = channel.get_user_tweets(clean_user, limit=count)
-            return self._normalize_agent_reach_data(tweets, clean_user)
+            from agent_reach import runner, manifest as manifests
         except ImportError:
             logger.info("未檢測到本機 agent-reach CLI 或函式庫，返回標準結構以供管線接續。")
             return self._fallback_data(clean_user, count)
+
+        try:
+            manifest = None
+            manifest_error = getattr(manifests, "ManifestError", Exception)
+            for ch in ("twitter", "x"):
+                try:
+                    manifest = manifests.get(ch)
+                    break
+                except manifest_error:
+                    continue
+
+            if manifest is None:
+                logger.warning("agent-reach 函式庫未安裝或未設定 twitter/x 頻道（不可用），切換至備援資料。")
+                return self._fallback_data(clean_user, count)
+
+            envelope = runner.run(manifest, query=clean_user, params={"limit": count})
+            data = envelope.to_dict() if hasattr(envelope, "to_dict") else envelope
+            return self._normalize_agent_reach_data(data, clean_user)
         except Exception as e:
             logger.warning(f"Agent Reach 提取失敗: {e}")
             return self._fallback_data(clean_user, count)
@@ -76,16 +90,26 @@ class AgentReachScraper:
     def _normalize_agent_reach_data(self, raw_data: Any, username: str) -> List[Dict[str, Any]]:
         from datetime import datetime, timezone
         now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        items = raw_data if isinstance(raw_data, list) else raw_data.get("posts", [])
+        if isinstance(raw_data, list):
+            items = raw_data
+        elif isinstance(raw_data, dict):
+            items = raw_data.get("items") if "items" in raw_data else raw_data.get("posts", [])
+        else:
+            items = getattr(raw_data, "items", [])
         results = []
         for item in items:
-            created_at = item.get("created_at") or now_iso
+            item_dict = item if isinstance(item, dict) else (item.__dict__ if hasattr(item, "__dict__") else {})
+            created_at = item_dict.get("created_at") or item_dict.get("published_at") or now_iso
+            engagement = item_dict.get("engagement") if isinstance(item_dict.get("engagement"), dict) else {}
+            likes_val = item_dict.get("likes") if item_dict.get("likes") is not None else engagement.get("likes", item_dict.get("favorite_count", 0))
+            retweets_val = item_dict.get("retweets") if item_dict.get("retweets") is not None else engagement.get("retweets", item_dict.get("retweet_count", 0))
+            replies_val = item_dict.get("replies") if item_dict.get("replies") is not None else engagement.get("replies", item_dict.get("reply_count", 0))
             results.append({
                 "author": username,
-                "text": item.get("text") or item.get("content", ""),
-                "likes": self._safe_int(item.get("likes") if item.get("likes") is not None else item.get("favorite_count", 0)),
-                "retweets": self._safe_int(item.get("retweets") if item.get("retweets") is not None else item.get("retweet_count", 0)),
-                "replies": self._safe_int(item.get("replies") if item.get("replies") is not None else item.get("reply_count", 0)),
+                "text": item_dict.get("text") or item_dict.get("content", ""),
+                "likes": self._safe_int(likes_val),
+                "retweets": self._safe_int(retweets_val),
+                "replies": self._safe_int(replies_val),
                 "created_at": created_at,
                 "source": "agent_reach"
             })

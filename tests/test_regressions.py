@@ -219,5 +219,111 @@ class UnknownMetricsTests(unittest.TestCase):
         self.assertEqual(wf.format_metric(1200), "1200")
 
 
+class ScrapeGraphConfigTests(unittest.TestCase):
+    def test_ollama_custom_url_passed_as_base_url(self):
+        """以最新版 scrapegraphai 支援的 base_url 鍵名斷言設定被傳入 SmartScraperGraph。"""
+        from scrapers.scrapegraph_analyzer import ScrapeGraphExtractor
+
+        mock_smart_scraper_cls = mock.MagicMock()
+        mock_smart_scraper = mock.MagicMock()
+        mock_smart_scraper.run.return_value = {"summary": "ok"}
+        mock_smart_scraper_cls.return_value = mock_smart_scraper
+
+        mock_graphs = mock.MagicMock()
+        mock_graphs.SmartScraperGraph = mock_smart_scraper_cls
+
+        with mock.patch.dict(sys.modules, {
+            "scrapegraphai": mock.MagicMock(),
+            "scrapegraphai.graphs": mock_graphs,
+        }):
+            extractor = ScrapeGraphExtractor(
+                llm_model="ollama/llama3.2",
+                ollama_url="http://custom-ollama:11434"
+            )
+            extractor._scrapegraph_available = True
+            extractor.extract_from_url_or_html("https://example.com", "抽取重點")
+
+            self.assertTrue(mock_smart_scraper_cls.called)
+            config = mock_smart_scraper_cls.call_args.kwargs.get("config", {})
+            llm_config = config.get("llm", {})
+            self.assertEqual(llm_config.get("base_url"), "http://custom-ollama:11434")
+            self.assertNotIn("ollama_url", llm_config)
+
+
+class AgentReachImportTests(unittest.TestCase):
+    def test_agent_reach_uses_runner_entrypoint_when_channel_available(self):
+        """修前因 import agent_reach.channels.twitter 失敗走備援；修後走真實 runner.run 入口。"""
+        mock_agent_reach = mock.MagicMock()
+        mock_runner = mock.MagicMock()
+        mock_manifests = mock.MagicMock()
+
+        mock_manifest = mock.MagicMock()
+        mock_manifests.get.return_value = mock_manifest
+
+        mock_envelope = mock.MagicMock()
+        mock_envelope.to_dict.return_value = {
+            "channel": "x",
+            "items": [
+                {
+                    "text": "真實貼文內容",
+                    "engagement": {"likes": 50, "retweets": 10, "replies": 5},
+                    "created_at": "2026-10-29T12:00:00Z",
+                }
+            ]
+        }
+        mock_runner.run.return_value = mock_envelope
+
+        with mock.patch.dict(sys.modules, {
+            "agent_reach": mock_agent_reach,
+            "agent_reach.runner": mock_runner,
+            "agent_reach.manifest": mock_manifests,
+        }):
+            mock_agent_reach.runner = mock_runner
+            mock_agent_reach.manifest = mock_manifests
+
+            scraper = AgentReachScraper()
+            scraper.cli_available = False
+            results = scraper.fetch_tweets("testuser", count=5)
+
+            mock_manifests.get.assert_called_with("twitter")
+            mock_runner.run.assert_called_once_with(mock_manifest, query="testuser", params={"limit": 5})
+            self.assertEqual(len(results), 1)
+            self.assertEqual(results[0]["text"], "真實貼文內容")
+            self.assertEqual(results[0]["likes"], 50)
+            self.assertEqual(results[0]["retweets"], 10)
+            self.assertEqual(results[0]["replies"], 5)
+            self.assertEqual(results[0]["source"], "agent_reach")
+
+    def test_agent_reach_reports_unavailable_when_channel_missing(self):
+        """當 agent-reach 安裝但無 twitter/x 頻道時，明確回報不可用並切換至備援資料。"""
+        mock_agent_reach = mock.MagicMock()
+        mock_runner = mock.MagicMock()
+        mock_manifests = mock.MagicMock()
+
+        class MockManifestError(Exception):
+            pass
+
+        mock_manifests.ManifestError = MockManifestError
+        mock_manifests.get.side_effect = MockManifestError("no channel named 'twitter'")
+
+        with mock.patch.dict(sys.modules, {
+            "agent_reach": mock_agent_reach,
+            "agent_reach.runner": mock_runner,
+            "agent_reach.manifest": mock_manifests,
+        }):
+            mock_agent_reach.runner = mock_runner
+            mock_agent_reach.manifest = mock_manifests
+
+            scraper = AgentReachScraper()
+            scraper.cli_available = False
+            with self.assertLogs("scrapers.agent_reach_scraper", level="WARNING") as cm:
+                results = scraper.fetch_tweets("testuser", count=5)
+
+            self.assertFalse(mock_runner.run.called)
+            self.assertTrue(any("不可用" in log for log in cm.output))
+            self.assertEqual(len(results), 1)
+            self.assertIn("多數人還在用官方貴得離譜的 API", results[0]["text"])
+
+
 if __name__ == "__main__":
     unittest.main()

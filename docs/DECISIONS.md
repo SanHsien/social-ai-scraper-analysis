@@ -39,7 +39,7 @@ pydantic 仍會由 scrapegraphai 間接安裝（它的 `SmartScraperGraph` 用 `
 
 **重新評估的觸發條件**：程式開始 `import` 其中任何一個，或改用 `.env` 載入金鑰時，把該套件加回 `requirements.txt` 並寫上實際需要的下限。
 
-### 檢查時順帶發現、未修的問題
+### 檢查時順帶發現、後續已修復的問題（2026-10-29）
 
-- `scrapers/scrapegraph_analyzer.py` 對 Ollama 設定 `ollama_url`，scrapegraphai 2.3.1 的原始碼沒有讀這個鍵，自訂的 Ollama 位址不會生效。
-- `scrapers/agent_reach_scraper.py` 匯入 `agent_reach.channels.twitter`，最新的 agent-reach 0.1.0 只有 `channels.rss` 與 `channels.youtube`，函式庫路徑一定落到備援資料。
+- `scrapers/scrapegraph_analyzer.py`：對 Ollama 改為傳入支援的 `base_url`（原本傳入未讀取的 `ollama_url`）。
+- `scrapers/agent_reach_scraper.py`：改為透過 `agent_reach.runner` 與 `agent_reach.manifest` 動態取得頻道，頻道不存在或未安裝時明確記錄不可用並走備援（原本匯入不存在的 `agent_reach.channels.twitter`）。

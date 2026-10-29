@@ -20,11 +20,12 @@ class ScrapeGraphExtractor:
         self,
         llm_model: str = "ollama/llama3.2",
         api_key: Optional[str] = None,
-        ollama_url: str = "http://localhost:11434"
+        ollama_url: str = "http://localhost:11434",
+        base_url: Optional[str] = None
     ):
         self.llm_model = llm_model
         self.api_key = api_key
-        self.ollama_url = ollama_url
+        self.ollama_url = base_url or ollama_url
         self._scrapegraph_available = self._check_availability()
 
     def _check_availability(self) -> bool:
@@ -62,7 +63,7 @@ class ScrapeGraphExtractor:
 
             if "ollama" in self.llm_model.lower():
                 graph_config["llm"]["model_name"] = self.llm_model.replace("ollama/", "")
-                graph_config["llm"]["ollama_url"] = self.ollama_url
+                graph_config["llm"]["base_url"] = self.ollama_url
             elif self.api_key:
                 graph_config["llm"]["api_key"] = self.api_key
 

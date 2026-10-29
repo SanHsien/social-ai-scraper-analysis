@@ -18,6 +18,8 @@
 - postlens CLI：輸出目錄無法寫入時回報錯誤並結束碼 2（原本 traceback）；報表中網址含括號或空白時連結不再斷掉。
 - `tools/check_links.py` 說明文字改成符合本 repo。
 - `tools/dev_check.ps1`：CI 傳入的基準 commit 已不存在（例如歷史被改寫）時，`git rev-parse` 的非零 exit code 會外洩成整體失敗；改為全部閘門通過後明確 `exit 0`。
+- `scrapers/scrapegraph_analyzer.py`：修正 Ollama 設定鍵名，改傳入支援的 `base_url`（原本傳入未讀取的 `ollama_url`），使自訂 Ollama 伺服器位址正常生效。
+- `scrapers/agent_reach_scraper.py`：修正 Agent Reach 呼叫入口（改用 `agent_reach.runner` 與 `agent_reach.manifest` 動態取得頻道，取代不存在的 `agent_reach.channels.twitter`），未安裝或無可用頻道時明確記錄不可用並切換至備援資料。
 
 ### 移除
 

@@ -18,6 +18,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), newest 
 - postlens CLI: an unwritable output directory exits 2 with an error (was a traceback); report links no longer break on URLs containing parentheses or spaces.
 - `tools/check_links.py` docstring now describes this repo.
 - `tools/dev_check.ps1`: when the base commit passed by CI no longer exists (e.g. rewritten history), the non-zero exit code of `git rev-parse` leaked out as an overall failure; the script now exits 0 explicitly once all gates pass.
+- `scrapers/scrapegraph_analyzer.py`: fixed Ollama config key to pass `base_url` (was unread `ollama_url`) so custom Ollama endpoints take effect.
+- `scrapers/agent_reach_scraper.py`: fixed Agent Reach entrypoint to use `agent_reach.runner` and `agent_reach.manifest` (was nonexistent `agent_reach.channels.twitter`), clearly logging unavailable status and falling back when channels are missing.
 
 ### Removed
 
