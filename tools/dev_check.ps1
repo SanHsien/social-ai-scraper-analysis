@@ -17,17 +17,22 @@ function Invoke-Gate {
 $python = @('python', 'python3') | Where-Object { Get-Command $_ -ErrorAction SilentlyContinue } | Select-Object -First 1
 if (-not $python) { throw 'python is required on PATH.' }
 
-Invoke-Gate 'Unit tests' { & $python -m unittest discover -s (Join-Path $repoRoot 'tests') -p 'test_*.py' }
-Invoke-Gate 'Markdown relative links' { & $python (Join-Path $repoRoot 'tools/check_links.py') }
-Invoke-Gate 'git diff --check (unstaged)' { git -C $repoRoot diff --check }
-Invoke-Gate 'git diff --cached --check (staged)' { git -C $repoRoot diff --cached --check }
+Push-Location $repoRoot
+try {
+    Invoke-Gate 'Unit tests' { & $python -m unittest discover -s (Join-Path $repoRoot 'tests') -p 'test_*.py' }
+    Invoke-Gate 'Markdown relative links' { & $python (Join-Path $repoRoot 'tools/check_links.py') }
+    Invoke-Gate 'git diff --check (unstaged)' { git -C $repoRoot diff --check }
+    Invoke-Gate 'git diff --cached --check (staged)' { git -C $repoRoot diff --cached --check }
 
-if (-not [string]::IsNullOrWhiteSpace($BaseRef) -and $BaseRef -notmatch '^0+$') {
-    $baseCommit = (& git -C $repoRoot rev-parse --verify "$BaseRef^{commit}" 2>$null | Select-Object -First 1)
-    if ($LASTEXITCODE -eq 0 -and $baseCommit) {
-        Invoke-Gate "git diff --check $baseCommit..HEAD" { git -C $repoRoot diff --check "$baseCommit..HEAD" }
+    if (-not [string]::IsNullOrWhiteSpace($BaseRef) -and $BaseRef -notmatch '^0+$') {
+        $baseCommit = (& git -C $repoRoot rev-parse --verify "$BaseRef^{commit}" 2>$null | Select-Object -First 1)
+        if ($LASTEXITCODE -eq 0 -and $baseCommit) {
+            Invoke-Gate "git diff --check $baseCommit..HEAD" { git -C $repoRoot diff --check "$baseCommit..HEAD" }
+        }
     }
+    Write-Host 'dev_check: all gates passed'
+} finally {
+    Pop-Location
 }
-Write-Host 'dev_check: all gates passed'
 # A missing base commit (e.g. rewritten history) leaves rev-parse's non-zero exit code behind; do not fail on it.
 exit 0
