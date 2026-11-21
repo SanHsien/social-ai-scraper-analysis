@@ -14,7 +14,7 @@
 ## 中期：等條件成立再做
 | 項目 | 觸發條件 | 驗收方式 | 建議執行者 | 證據 |
 | --- | --- | --- | --- | --- |
-| scrapling／scrapegraphai deferral 到期處理 | PyPI 出現比 `deferredLatest` 更新的版本，`Dependency freshness`（每月 1 日）會自動轉紅 | 離線核對新版簽章（`inspect`）、更新或刪除該筆 deferral（維持三段式版本號）；`python tools/check_dependency_freshness.py --strict` exit 0 | Claude Sonnet | `.github/dependency-deferrals.json`；`.github/workflows/dependency-freshness.yml:14` |
+| scrapling／scrapegraphai deferral 到期處理 | PyPI 出現比 `deferredLatest` 更新的版本，`Dependency freshness`（每月 1 日）會自動轉紅 | 離線核對新版簽章（`inspect`）、更新或刪除該筆 deferral（維持三段式版本號）；`python tools/check_dependency_freshness.py --strict` exit 0 | Claude Sonnet | `.github/dependency-deferrals.json`（2026-11-21：scrapling 0.5.1 已離線核對並續延，scrapegraphai 仍是 2.3.1）；`.github/workflows/dependency-freshness.yml:14` |
 | `postlens` 缺值互動數 Optional 化 | 維護者決定要區分「未取得」與「0」（目前載入時缺少的按讚／回覆／轉發／引用算 0，只有曝光數保留 None） | 模型、評分、報表三處一致處理 None；補測試證明缺值不被當 0 排名；`python -m unittest discover -s tests` 綠；CHANGELOG 該條已知殘留註記刪除 | Claude Opus | `postlens/models.py:15-18`；深掃報告（2026-10-26）「追加修正」 |
 | 真實抓取驗證（Threads／Scrapling 路徑） | 維護者有登入或可用網路環境並要實測 | 在實機跑一次抓取，確認互動數缺值時為「未取得」而非捏造數字；結果記進 `docs/DECISIONS.md` | 維護者 | 深掃報告（2026-10-26）；commit `a0c4fa6` |
 
