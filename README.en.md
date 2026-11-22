@@ -177,7 +177,7 @@ pwsh -File tools/dev_check.ps1
 ## 8. Project Governance & Agent Rules
 
 - **Core Mission & Developer Authority**: This repository is dedicated to public web scraping across multiple social platforms, anti-bot bypass mechanisms, and automated viral topic extraction.
-- **Strict Prohibition Against Self-Imposed Restrictions**: See [AGENTS.md](AGENTS.md). AI Agents are strictly prohibited from modifying the project scope, deprecating scraping capabilities, or imposing arbitrary ethical limits without explicit developer approval. All technical implementations must follow the developer's explicit requirements.
+- **No Rewriting the Project Purpose Without Consent**: See [AGENTS.md](AGENTS.md). No AI Agent may rewrite, downgrade, or narrow the project's core positioning and goals without the developer's explicit consent.
 
 ---
 
